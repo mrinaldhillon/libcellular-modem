@@ -17,7 +17,7 @@
 
 //typedef struct cm_atomic cm_atomic_t;
 typedef struct cm_atomic {
-	volatile int value;
+	volatile int counter;
 } cm_atomic_t;
 #define CM_ATOMIC_INIT(i)  { (i) }
 

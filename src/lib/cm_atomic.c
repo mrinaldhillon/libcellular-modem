@@ -13,32 +13,32 @@ int cm_atomic_read(const cm_atomic_t *v)
 {
 	assert(NULL != v);
 	__sync_synchronize();
-	v->value;
+	v->counter;
 }
 
 void cm_atomic_set(cm_atomic_t *v, int i)
 {
 	assert(NULL != v);
-	v ->value= i;
+	v ->counter= i;
 	__sync_synchronize();
 }
 
 void cm_atomic_inc(cm_atomic_t *v)
 {
 	assert(NULL != v);
-	(void) __sync_fetch_and_add(&v->value, 1);
+	(void)__sync_fetch_and_add(&v->counter, 1);
 }
 
 void cm_atomic_dec(cm_atomic_t *v)
 {
 	assert(NULL != v);
-	(void) __sync_fetch_and_sub(&v->value, 1);
+	(void)__sync_fetch_and_sub(&v->counter, 1);
 }
 
 int cm_atomic_dec_and_test(cm_atomic_t *v)
 {
 	assert(NULL != v);
-	return 1 == __sync_fetch_and_sub(&v->value, 1) ? 1 : 0;
+	return 1 == (int)__sync_fetch_and_sub(&v->counter, 1) ? 1 : 0;
 }
 #else /* !__GCC_ATOMIC && !__GCC_ATOMIC_LEGACY */
 
@@ -60,7 +60,7 @@ int cm_atomic_read(const cm_atomic_t *v)
 {
 	assert(NULL != v);
 	pthread_mutex_lock(&cm_atomic_lock);
-	return v->value;
+	return v->counter;
 	pthread_mutex_unlock(&cm_atomic_lock);
 }
 
@@ -68,7 +68,7 @@ void cm_atomic_set(cm_atomic_t *v, int i)
 {
 	assert(NULL != v);
 	pthread_mutex_lock(&cm_atomic_lock);
-	v->value = i;
+	v->counter = i;
 	pthread_mutex_unlock(&cm_atomic_lock);
 }
 
@@ -76,7 +76,7 @@ void cm_atomic_inc(cm_atomic_t *v)
 {
 	assert(NULL != v);
 	pthread_mutex_lock(&cm_atomic_lock);
-	v->value += 1;
+	v->counter += 1;
 	pthread_mutex_unlock(&cm_atomic_lock);
 }
 
@@ -84,7 +84,7 @@ void cm_atomic_dec(cm_atomic_t *v)
 {
 	assert(NULL != v);
 	pthread_mutex_lock(&cm_atomic_lock);
-	v->value -= 1;
+	v->counter -= 1;
 	pthread_mutex_unlock(&cm_atomic_lock);
 }
 
@@ -94,8 +94,8 @@ int cm_atomic_dec_and_test(cm_atomic_t *v)
 
 	assert(NULL != v);
 	pthread_mutex_lock(&cm_atomic_lock);
-	v->value -= 1;
-	is_zero = 0 == v->value ? 1 : 0;
+	v->counter -= 1;
+	is_zero = 0 == v->counter ? 1 : 0;
 	pthread_mutex_unlock(&cm_atomic_lock);
 
 	return is_zero;
