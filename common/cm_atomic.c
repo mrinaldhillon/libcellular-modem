@@ -58,10 +58,12 @@ static pthread_mutex_t cm_atomic_lock = PTHREAD_MUTEX_INITIALIZER;
 
 int cm_atomic_read(const cm_atomic_t *v)
 {
+	int value = 0;
 	assert(NULL != v);
 	pthread_mutex_lock(&cm_atomic_lock);
-	return v->counter;
+	value = v->counter;
 	pthread_mutex_unlock(&cm_atomic_lock);
+	return value;
 }
 
 void cm_atomic_set(cm_atomic_t *v, int i)

@@ -1,0 +1,84 @@
+TARGET =
+TLR_BASE := $(shell cd ..; pwd)
+export TLR_BASE
+
+include $(TLR_BASE)/build/makefile.globals
+
+TARGETS = ../lib/libdigiutils ../lib/message ../lib/config_mgr ../tools/sendmsg
+TARGETS += ../tools/modem_manager ../tools/modem_manager/cellular_device/qmi
+TARGETS += ../tools/modem_manager/cellular_device
+
+TARGET_SDK = ../sdk/pkgs
+
+TARGETS_CLEAN = $(addsuffix .clean,$(TARGETS) $(CLEAN_TARGETS))
+TARGETS_INSTALL = $(addsuffix .install,$(TARGETS) )
+
+export TARGET
+export INSTALL_ROOT
+
+.PHONY: all
+all: $(TARGET_SDK) $(TARGETS)
+
+.PHONY: $(TARGET_SDK) $(TARGETS)
+
+../sdk/pkgs:
+	$(MAKE) -C $@ -f pkgs.mak
+
+../lib/message:
+	$(MAKE) -C $@ all install
+
+../tools/sendmsg:
+	$(MAKE) -C $@ all install
+
+../lib/libcellular:
+	$(MAKE) -C $@ all install
+
+../lib/libdigiutils:
+	$(MAKE) -C $@ all install
+
+../lib/config_mgr:
+	$(MAKE) -C $@ all install
+
+../unit_test:
+	$(MAKE) -C $@ all
+
+../commands/show/cellular:
+	$(MAKE) -C $@ all install
+
+../unit_test:
+	$(MAKE) -C $@ all install
+
+../tools/modem_manager/cellular_device/qmi:
+	$(MAKE) -C $@ all install
+
+../tools/modem_manager/cellular_device:
+	$(MAKE) -C $@ all install
+
+
+.PHONY: clean
+clean: $(TARGETS_CLEAN)
+
+.PHONY: $(TARGETS_CLEAN)
+$(TARGETS_CLEAN):
+	$(MAKE) -C $(basename $@) clean
+
+.PHONY: install
+install: $(TARGETS_INSTALL)
+
+.PHONY: $(TARGETS_INSTALL)
+$(TARGETS_INSTALL):
+	$(MAKE) -C $(basename $@) install
+
+.PHONY: cellular-device
+cellular-device: qmi
+	$(MAKE) -C ../tools/modem_manager/cellular_device all install test
+
+.PHONY: qmi
+qmi:
+	$(MAKE) -C ../tools/modem_manager/cellular_device/qmi all install
+
+.PHONY: run
+run:
+	@LD_LIBRARY_PATH=$(DESTDIR)/usr/lib config_mgr/config_mgr &
+	@LD_LIBRARY_PATH=$(DESTDIR)/usr/lib cli/cli
+	@-pkill config_mgr
