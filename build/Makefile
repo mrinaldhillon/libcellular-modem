@@ -4,8 +4,7 @@ export TLR_BASE
 
 include $(TLR_BASE)/build/makefile.globals
 
-TARGETS += ../common ../tests
-# ../src
+TARGETS += ../common ../cm-manager ../plugins ../tests
 
 TARGETS_CLEAN = $(addsuffix .clean,$(TARGETS) $(CLEAN_TARGETS))
 TARGETS_INSTALL = $(addsuffix .install,$(TARGETS) )
@@ -18,16 +17,14 @@ all: $(TARGETS)
 
 .PHONY: $(TARGETS)
 
-#../src:
-#	$(MAKE) -C $@ all install
 ../common:
 	$(MAKE) -C $@ all
-
+../cm-manager:
+	$(MAKE) -C $@ all
+../plugins:
+	$(MAKE) -C $@ all install
 ../tests:
 	$(MAKE) -C $@ all
-
-#../plugins:
-#	$(MAKE) -C $@ all install
 
 .PHONY: clean
 clean: $(TARGETS_CLEAN)

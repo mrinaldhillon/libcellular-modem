@@ -21,4 +21,4 @@ export CXX = $(CROSS_COMPILE)g++
 
 LIBPATH = -L$(INSTALL_ROOT)/usr/lib -L$(INSTALL_ROOT)/lib -Wl,-rpath-link=$(INSTALL_ROOT)/lib
 
-CFLAGS = -Wall -Werror --std=gnu99 -D_GNU_SOURCE -O0 -g -MD
+CFLAGS = -Wall -Werror --std=gnu99 -D_GNU_SOURCE -O0 -g -MD -Wno-unused-function

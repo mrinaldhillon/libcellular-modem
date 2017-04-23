@@ -2,16 +2,17 @@ include $(TLR_BASE)/build/rds00008.mk
 
 INCLUDES_DIR=.
 LIBS_DIR=.
+COMMON_DIR=$(TLR_BASE)/common
 
-INCLUDE=-I$(INCLUDES_DIR)
+INCLUDE=-I$(INCLUDES_DIR) -I$(COMMON_DIR)
 
-LIBOBJS = $(LIBS_DIR)/cm_atomic.o $(LIBS_DIR)/cm_ref.o
+LIBOBJS = $(LIBS_DIR)/cm_plugin_handler.o
 
 ifeq ($(DEBUG),true)
 CFLAGS += -g
 endif
 
-CFLAGS += -fPIC $(INCLUDE)
+CFLAGS += $(INCLUDE)
 
 .PHONY: all clean
 
