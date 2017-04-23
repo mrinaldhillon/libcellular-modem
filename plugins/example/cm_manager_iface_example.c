@@ -2,14 +2,15 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <errno.h>
-#include "ccan/container_of/container_of.h"
 #include "cm_err.h"
 #include "cm_log.h"
 #include "cm_ref.h"
+#include "cm_container_of.h"
 #include "cm_manager_iface.h"
 #include "cm_manager_iface_example_priv.h"
 
-#define PLUGIN_NAME	"example"
+#define PLUGIN_NAME	"EXAMPLE-PLUGIN"
+
 //@todo: revisit unloading logic
 static sem_t mutex;
 
@@ -29,7 +30,7 @@ static void cm_manager_iface_release(struct cm_ref *ref)
 {
 	assert(NULL != ref);
 	struct cm_manager_iface *self =
-		container_of(ref, struct cm_manager_iface, refcount);
+		cm_container_of(ref, struct cm_manager_iface, refcount);
 
 	if (self->priv->notif) {
 		self->priv->notif(self, self->priv->userdata);
@@ -68,6 +69,11 @@ static void cm_manager_iface_set_notify_release(struct cm_manager_iface *self,
 	self->priv->userdata = userdata;
 }
 
+static const char * cm_manager_iface_get_name(struct cm_manager_iface *iface)
+{
+	return PLUGIN_NAME;
+}
+
 struct cm_manager_iface * cm_manager_iface_new(void)
 {
 	struct cm_manager_iface_priv *priv =
@@ -87,6 +93,7 @@ struct cm_manager_iface * cm_manager_iface_new(void)
 	self->priv = priv;
 	self->ref = &cm_manager_iface_ref;
 	self->unref = &cm_manager_iface_unref;
+	self->get_name = &cm_manager_iface_get_name;
 	self->set_notify_release = &cm_manager_iface_set_notify_release;
 
 	//decrement semphore's value if successfully created

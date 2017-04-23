@@ -12,7 +12,8 @@ INCLUDE=-I$(LIBCM_MANAGER_INC_DIR) -I$(INCLUDES_DIR)\
 
 LIBOBJS=$(LIBS_DIR)/cm_manager_iface_example.o
 
-LIBRARY=libcm-manager-iface-example.so
+LIBRARY=libcm-manager-plugin-example.so
+LIBRARY1=libcm-manager-plugin-example1.so
 
 ifeq ($(DEBUG),true)
 CFLAGS += -g
@@ -29,6 +30,9 @@ all: $(LIBRARY)
 
 $(LIBRARY):$(LIBOBJS) $(COMMON_LIBS)
 	echo "install root $(INSTALL_ROOT)"
+	$(CC) -Wl,-soname,$(LIBRARY) -shared $^ -o $@ $(LDFLAGS) -lpthread 
+$(LIBRARY1):$(LIBOBJS) $(COMMON_LIBS)
+	echo "install root $(INSTALL_ROOT)"
 	$(CC) -Wl,-soname,$(LIBRARY) -shared $^ -o $@ $(LDFLAGS) -lpthread
 
 # Dependancy rule
@@ -37,9 +41,13 @@ $(LIBRARY):$(LIBOBJS) $(COMMON_LIBS)
 $(LIBOBJS): %.o: %.c
 	$(CC) -c -o $@ $< -MD $(CFLAGS)
 
-install: $(LIBRARY)
-	-mkdir -p $(INSTALL_ROOT)/usr/lib/cm-manager/plugins
-	install -m 0755 $^ $(INSTALL_ROOT)/usr/lib/cm-manager/plugins
+$(LIBOBJS): %.o: %.c
+	$(CC) -c -o $@ $< -MD $(CFLAGS)
+
+
+install: $(LIBRARY) $(LIBRARY1)
+	-mkdir -p $(INSTALL_ROOT)/usr/lib/cm-manager
+	install -m 0755 $^ $(INSTALL_ROOT)/usr/lib/cm-manager
 
 clean:
-	rm -f $(LIBRARY) $(LIBOBJS) $(LIBS_DIR)/*.d
+	rm -f $(LIBRARY) $(LIBRARY1) $(LIBOBJS) $(LIBS_DIR)/*.d

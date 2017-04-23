@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-#include "ccan/container_of/container_of.h"
+#include "cm_container_of.h"
 #include "cm_ref.h"
 #include "cm_log.h"
 
@@ -16,7 +16,7 @@ static void testref_release(struct cm_ref *ref)
 {
 	assert(NULL != ref);
 	struct testref *self =
-		(struct testref *)container_of(ref, struct testref, refcount);
+		cm_container_of(ref, struct testref, refcount);
 	assert(NULL != self);
 	printf("calling release notification\n");
 

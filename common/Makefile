@@ -1,11 +1,11 @@
 include $(TLR_BASE)/build/rds00008.mk
 
-INCLUDES_DIR=.
-LIBS_DIR=.
+CCAN_DIR=$(TLR_BASE)/lib/ccan/ccan
 
-INCLUDE=-I$(INCLUDES_DIR)
+INCLUDE=-I. -I$(CCAN_DIR)/list \
+	-I$(CCAN_DIR)/container_of
 
-LIBOBJS = $(LIBS_DIR)/cm_atomic.o $(LIBS_DIR)/cm_ref.o
+LIBOBJS=./cm_atomic.o ./cm_ref.o
 
 ifeq ($(DEBUG),true)
 CFLAGS += -g
@@ -17,12 +17,9 @@ CFLAGS += -fPIC $(INCLUDE)
 
 all: $(LIBOBJS)
 
+-include $(LIBOBJS:.o=.d)
 $(LIBOBJS): %.o: %.c
 	$(CC) -c -o $@ $< $(CFLAGS)
-
-#-include $(LIBOBJS:.o=.d)
-#$(LIBOBJS): %.o: %.c
-#	$(CC) -c -o $@ $< -MD $(CFLAGS)
 
 clean:
 	rm -f $(LIBOBJS) $(LIBS_DIR)/*.d

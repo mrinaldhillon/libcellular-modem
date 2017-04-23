@@ -135,18 +135,18 @@ void cm_plugin_handler_load_from_dir(const char *dirpath,
 				     int load_in_default_namespace,
 				     for_each_loaded loaded,
 				     load_plugin_done done,
-				     void *userdata)
+				     void *userdata,
+				     cm_err_t *err)
 {
 	DIR *dirp = NULL;
 	struct dirent *dirent = NULL;
-	cm_err_t err = CM_ERR_NONE;
 	int num_loaded = 0;
 
-	assert(NULL != dirpath && (0 != strlen(dirpath)));
+	assert(NULL != dirpath && (0 != strlen(dirpath)) && NULL != err);
 	dirp = opendir(dirpath);
 	if (NULL == dirp) {
 		cm_warn("Unable to open (%s) err: %d", dirpath, errno);
-		err = CM_ERR_PLUGIN_HANDLER_OPENDIR;
+		*err = CM_ERR_PLUGIN_HANDLER_OPENDIR;
 		goto out_done;
 	}
 
@@ -157,9 +157,11 @@ void cm_plugin_handler_load_from_dir(const char *dirpath,
 
 		cm_plugin_handler_load_plugin(dirpath, dirent->d_name,
 					      load_in_default_namespace,
-					      loaded, userdata, &err);
-		if (CM_ERR_NONE == err)
+					      loaded, userdata, err);
+		if (CM_ERR_NONE == *err)
 			num_loaded += 1;
+		else
+			break;
 	}
 
 	if (-1 == closedir(dirp))
@@ -167,9 +169,10 @@ void cm_plugin_handler_load_from_dir(const char *dirpath,
 	// if no plugins found than this definitely treated as an error.
 	if (0 == num_loaded) {
 		cm_error("No plugins found at %s", dirpath);
-		err = CM_ERR_PLUGIN_HANDLER_ELIBACC;
+		//@tbd: this is probably not required, since error is already set
+		*err = CM_ERR_PLUGIN_HANDLER_ELIBACC;
 	}
 out_done:
 	if (done)
-		done(userdata, err);
+		done(userdata, *err);
 }

@@ -13,6 +13,7 @@ void cm_plugin_handler_load_from_dir(const char *dirpath,
 				     int load_in_new_namespace,
 				     for_each_loaded loaded,
 				     load_plugin_done done,
-				     void *userdata);
+				     void *userdata,
+				     cm_err_t *err);
 
 #endif /* _CM_PLUGIN_HANDLER_ */

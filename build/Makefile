@@ -20,7 +20,7 @@ all: $(TARGETS)
 ../common:
 	$(MAKE) -C $@ all
 ../cm-manager:
-	$(MAKE) -C $@ all
+	$(MAKE) -C $@ all install
 ../plugins:
 	$(MAKE) -C $@ all install
 ../tests:
