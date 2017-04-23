@@ -35,3 +35,9 @@
 
 #ctags files
 tags
+
+#install dir
+install/**
+
+#Opened files
+*.swp

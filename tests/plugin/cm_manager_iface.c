@@ -30,5 +30,7 @@ int main()
 					&test_for_each_loaded,
 					&test_load_plugin_done,
 					"2nd iface");
+	printf("press key to exit\n");
+	getchar();
 	exit(0);
 }

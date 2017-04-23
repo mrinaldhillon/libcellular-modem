@@ -49,6 +49,7 @@ struct cm_manager_iface *
 	assert(NULL != sopath && NULL != err);
 
 	//@todo:check if sopath exists
+	cm_debug("Loading plugin: %s", sopath);
 	if (0 == load_in_default_namespace)
 		plugin_handle = dlmopen(LM_ID_NEWLM, sopath, RTLD_LAZY);
 	else
@@ -71,7 +72,6 @@ struct cm_manager_iface *
 	cmm_iface->set_notify_release(cmm_iface,
 				      &cm_plugin_unload,
 				      plugin_handle);
-
 	return cmm_iface;
 
 err_dlsym:
@@ -116,7 +116,8 @@ static void cm_plugin_handler_load_plugin(const char *dirpath,
 	cmm_iface = cm_plugin_handler_load_manager_iface(filepath,
 						      load_in_default_namespace,
 						      err);
-	if (CM_ERR_NONE != *err) {
+	if (NULL == cmm_iface) {
+		assert(CM_ERR_NONE != *err);
 		cm_warn("Could not load %s, err: %d", filepath, *err);
 		goto out_free;
 	}

@@ -15,7 +15,7 @@ static sem_t mutex;
 
 __attribute__((constructor)) void cm_manager_iface_constructor(void)
 {
-	sem_init(&mutex, 0, 0);
+	sem_init(&mutex, 0, 1);
 	cm_debug("Loading plugin: %s", PLUGIN_NAME);
 }
 __attribute__((destructor)) void cm_manager_iface_destructor(void)
@@ -36,6 +36,7 @@ static void cm_manager_iface_release(struct cm_ref *ref)
 	}
 	free(self->priv);
 	free(self);
+	// Increment semaphore's value to allow destructor to proceed
 	sem_post(&mutex);
 }
 
@@ -87,5 +88,8 @@ struct cm_manager_iface * cm_manager_iface_new(void)
 	self->ref = &cm_manager_iface_ref;
 	self->unref = &cm_manager_iface_unref;
 	self->set_notify_release = &cm_manager_iface_set_notify_release;
+
+	//decrement semphore's value if successfully created
+	sem_wait(&mutex);
 	return self;
 }
