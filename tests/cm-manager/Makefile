@@ -14,7 +14,7 @@ all: $(CM_MANAGER_BIN)
 
 $(CM_MANAGER_BIN):
 	$(CC) $(CM_MANAGER_BIN).c -o $@ $^ $(CFLAGS) \
-		-L $(INSTALL_ROOT)/usr/lib/cm-manager -lcm-modem
+		-L $(INSTALL_ROOT)/usr/lib/ -lcm-manager
 
 clean:
 	rm -f $(CM_MANAGER_BIN) ./*.d

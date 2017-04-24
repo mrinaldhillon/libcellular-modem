@@ -2,7 +2,7 @@
 #define _CM_MANAGER_
 
 #include "cm_err.h"
-#include "cm_modem.h"
+//#include "cm_modem.h"
 
 struct cm_manager;
 #if 0
