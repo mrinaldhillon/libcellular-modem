@@ -1,0 +1,43 @@
+
+* Refcounting
+@tbd: Still working out refcounted objects behaviour.
+- new() sets the refcount to 1, do an unref to destroy.
+- Unref rule: refcounted objects are destroyed upon final unref. Think of this
+	as garbage collection and dont try to maintain your own refcount to
+	figure when is final unref.
+	So Unref Rule is that the code that creates the object does not have
+	control over when the object is destroyed. Just make sure to do
+	corresponding unref for each ref and one unref for new.
+- Refcounted objects being passed around:
+	1. Caller holds owenership of argument. If callee needs to access the
+		object after function returns, it needs to take reference on
+		the object.
+	2. If object is being passed to thread, take reference before
+		pthread_create and allow the thread function to unref the
+		refrenced object upon exit.
+	3. Rule 2 holds true for asyc and sync callbacks as well. i.e. object
+		pushed in callback is held by calling (maybe threaded) function
+		and will probably unref the object. hence take a reference to
+		it before callback returns in order to store in-memory.
+	4. Collection of Refcounted objects i.e. linked list, hash table:
+	 	If object is not going to be accessed after its been pushed
+		into the collection, dont bother incresing the refcount. keep
+		rule 3 in mind though.
+	 	Increase the refcount if object pointer is accessed after
+		pushing it to the collection.
+	 	Accessing the object from collection: Take lock on the whole
+		list before accessing the object, since you dont hold a
+		refernce to the object. I am still working out this logic.
+	5. Returned object. Caller holds the reference to the returned object
+		and needs to unref it to destroy.
+	References:
+	https://www.kernel.org/doc/Documentation/kref.txt
+	http://www.kroah.com/linux/talks/ols_2004_kref_talk
+
+* Live objects:
+	Objects are connected to the backend and always return updated properties are live objects.
+		Example cm_manager, cm_modem, cm_bearer, cm_sim, cm_messaging are live objects.
+	Not so live: cm_signal, cm_bearer_stats, cm_bearer_properties etc. 
+		After reading once unref them and fetch from live object when needed.
+	Objects take referenece to parent upon creation and unref parent once they are destroyed.
+	This makes sure that parent gets destroyed only once all its children are distroyed.

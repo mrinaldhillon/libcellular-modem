@@ -74,6 +74,18 @@ static const char * cm_manager_iface_get_name(struct cm_manager_iface *self)
 	return PLUGIN_NAME;
 }
 
+static void cm_manager_iface_start(struct cm_manager_iface *self, cm_err_t *err)
+{
+	assert(NULL != self && NULL != err);
+	cm_debug("Starting interface %s", PLUGIN_NAME);
+}
+
+static void cm_manager_iface_stop(struct cm_manager_iface *self, cm_err_t *err)
+{
+	assert(NULL != self && NULL != err);
+	cm_debug("Stopping interface %s", PLUGIN_NAME);
+}
+
 struct cm_manager_iface * cm_manager_iface_new(void)
 {
 	struct cm_manager_iface_priv *priv =
@@ -95,20 +107,11 @@ struct cm_manager_iface * cm_manager_iface_new(void)
 	self->unref = &cm_manager_iface_unref;
 	self->get_name = &cm_manager_iface_get_name;
 	self->set_notify_release = &cm_manager_iface_set_notify_release;
-
+	self->start = &cm_manager_iface_start;
+	self->stop = &cm_manager_iface_stop;
 	//decrement semphore's value if successfully created
 	sem_wait(&mutex);
 	return self;
 }
 
-void cm_manager_iface_start(struct cm_manager_iface *self, cm_err_t *err)
-{
-	assert(NULL != self && NULL != err);
-	cm_debug("Starting interface %s", PLUGIN_NAME);
-}
 
-void cm_manager_iface_stop(struct cm_manager_iface *self, cm_err_t *err)
-{
-	assert(NULL != self && NULL != err);
-	cm_debug("Stopping interface %s", PLUGIN_NAME);
-}
