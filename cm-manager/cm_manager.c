@@ -8,6 +8,7 @@
 #include "cm_manager.h"
 #include "cm_manager_private.h"
 #include "cm_plugin_handler.h"
+#include "cm_modem.h"
 
 #if !defined(CM_PLUGINS_DIR)
 #define CM_PLUGINS_DIR		"install/usr/lib/cm-manager"
@@ -27,7 +28,7 @@ static void cm_manager_for_each_iface_loaded(struct cm_manager_iface *iface,
 }
 
 static void cm_manager_load_plugin_done(void *userdata,
-			     cm_err_t err)
+					cm_err_t err)
 {
 	struct cm_manager *self = (struct cm_manager *)userdata;
 	cm_debug("Done loading %u cm manager ifaces with err: %d\n",
@@ -94,30 +95,101 @@ void cm_manager_unref(struct cm_manager *self)
 }
 
 
-#if 0
-not required, such api may add complexity
 void cm_manager_start(struct cm_manager *self,
 		      cm_err_t *err)
 {
-	assert(NULL != self);
-	//load modem manager interface into local list.
-	//start on each
+	assert(NULL != self && NULL != err &&
+	       1 != cm_list_empty(&self->ifaces));
+	struct cm_manager_iface *iface = NULL, *next = NULL;
+
+	//unload modem manager interfaces
+	cm_list_for_each_safe(&self->ifaces, iface, next, iface_node) {
+		//@todo create joinable pthreads for concurrent start
+		iface->ref(iface)->start(iface, err);
+		if (CM_ERR_NONE != *err) {
+			cm_warn("Could not start manager interface name %s err: %d",
+				iface->get_name(iface), *err);
+		}
+		iface->unref(iface);
+	}
 }
 
 void cm_manager_stop(struct cm_manager *self,
 		     cm_err_t *err)
 {
-	assert(NULL != self);
-	//stop on each manager
-	//unload modules
+	assert(NULL != self && NULL != err &&
+	       1 != cm_list_empty(&self->ifaces));
+	struct cm_manager_iface *iface = NULL, *next = NULL;
+
+	//unload modem manager interfaces
+	cm_list_for_each_safe(&self->ifaces, iface, next, iface_node) {
+		//@todo create joinable pthreads for concurrent stop
+		iface->ref(iface)->stop(iface, err);
+		if (CM_ERR_NONE != *err) {
+			cm_warn("Could not stop manager interface name %s err: %d",
+				iface->get_name(iface), *err);
+		}
+		iface->unref(iface);
+	}
 }
-cm_list * cm_manager_list_modems(struct cm_manager *self,
-				 cm_err_t *err)
+#if 0
+struct cm_manager_list_for_each_ctx {
+	struct cm_manager *self;
+	cm_manager_list_modems_for_each for_each;
+	void *userdata;
+};
+
+
+void cm_manager_list_modems_for_each_wrapper(struct cm_manager_iface *iface,
+					     struct cm_modem *modem,
+					     void *userdata)
 {
-	assert(NULL != self);
-	//fetch list from each manager
-	//append into a single list
-	//destroy the list from each modem
-	//return list
+	struct cm_manager *self = NULL;
+	struct cm_manager_list_for_each_ctx *ctx = NULL;
+	assert(NULL != iface &&
+	       NULL != modem &&
+	       NULL != userdata);
+
+	ctx = (struct cm_manager_list_for_each_ctx *)userdata;
+	assert(NULL != ctx &&
+	       NULL != ctx->self &&
+	       NULL != ctx->for_each);
+
+	self = ctx->self;
+	ctx->for_each(self, modem, userdata);
+}
+
+void cm_manager_list_modems(struct cm_manager *self,
+			    cm_manager_list_modems_for_each for_each,
+			    void *userdata,
+			    cm_err_t *err)
+{
+	assert(NULL != self &&
+	       NULL != for_each &&
+	       NULL != err &&
+	       1 != cm_list_empty(&self->ifaces));
+
+	struct cm_manager_iface *iface = NULL, *next = NULL;
+	struct cm_manager_list_for_each_ctx ctx;
+
+	memset(&ctx, 0, sizeof(ctx));
+	ctx.self = self;
+	ctx.for_each = for_each;
+	ctx.userdata = userdata;
+
+	cm_list_for_each_safe(&self->ifaces, iface, next, iface_node) {
+		//@todo create joinable pthreads for concurrent stop
+		//@tbd err for each may have to different
+		iface->ref(iface)->
+			list_modems(iface,
+				    &cm_manager_list_modems_for_each_wrapper,
+				    &ctx, err);
+		if (CM_ERR_NONE != *err) {
+			cm_warn("Error in listing modems from interface name %s err: %d",
+				iface->get_name(iface), *err);
+		}
+		iface->unref(iface);
+	}
 }
 #endif
+

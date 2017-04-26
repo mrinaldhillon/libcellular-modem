@@ -3,11 +3,22 @@ include $(TLR_BASE)/build/rds00008.mk
 CCAN_DIR=$(TLR_BASE)/lib/ccan
 COMMON_DIR=$(TLR_BASE)/common
 
-INCLUDES=./cm_manager.h \
-	$(COMMON_DIR)/cm_err.h \
+INCLUDES=$(COMMON_DIR)/cm_err.h \
 	$(COMMON_DIR)/cm_log.h \
 	$(COMMON_DIR)/cm_list.h \
-	$(COMMON_DIR)/cm_container_of.h
+	$(COMMON_DIR)/cm_container_of.h \
+	./cm_manager.h \
+	./cm_modem.h \
+	./cm_modem_state.h \
+	./cm_bearer.h \
+	./cm_bearer_properties.h \
+	./cm_bearer_ip_config.h \
+	./cm_bearer_stats.h \
+	./cm_signal.h \
+	./cm_signal_type.h \
+	./cm_sim.h \
+	./cm_messaging.h
+	
 
 #	$(CCAN_DIR)/ccan/list/list.h\
 	$(CCAN_DIR)/ccan/container_of/container_of.h\
