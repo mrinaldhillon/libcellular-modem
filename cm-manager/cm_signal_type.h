@@ -1,0 +1,13 @@
+#ifndef _CM_SIGNAL_TYPE_H_
+#define _CM_SIGNAL_TYPE_H_
+
+typedef enum {
+	CM_SIGNAL_TYPE_NONE =0,
+	CM_SIGNAL_TYPE_LTE,
+	CM_SIGNAL_TYPE_CDMA,
+	CM_SIGNAL_TYPE_EVDO,
+	CM_SIGNAL_TYPE_GSM,
+	CM_SIGNAL_TYPE_UMTS
+} cm_signal_type_t;
+
+#endif /* _CM_SIGNAL_TYPE_H_ */

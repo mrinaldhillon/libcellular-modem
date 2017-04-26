@@ -1,0 +1,2 @@
+ccan/list-Makefile: ccan/list/list.h ccan/list/list.c ccan/list/_info
+ccan/list.o: ccan/list/list.o

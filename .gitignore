@@ -1,5 +1,6 @@
 # Object files
 *.o
+*.d
 *.ko
 *.obj
 *.elf
@@ -31,3 +32,12 @@
 # Debug files
 *.dSYM/
 *.su
+
+#ctags files
+tags
+
+#install dir
+install/**
+
+#Opened files
+*.swp
