@@ -4,6 +4,7 @@
 #include "cm_err.h"
 #include "cm_log.h"
 #include "cm_ref.h"
+#include "cm_list.h"
 #include "cm_container_of.h"
 #include "cm_manager.h"
 #include "cm_manager_private.h"
@@ -13,6 +14,16 @@
 #if !defined(CM_PLUGINS_DIR)
 #define CM_PLUGINS_DIR		"install/usr/lib/cm-manager"
 #endif /* !defined PLUGINS_DIR */
+
+/*struct cm_manager_ifaces_list {
+	struct cm_list_head head;
+	int num_nodes;
+};
+
+struct cm_manager_iface_list_entry {
+	struct cm_manager_iface *iface;
+	struct cm_list_node node;
+};*/
 
 static void cm_manager_for_each_iface_loaded(struct cm_manager_iface *iface,
 					     void *userdata)

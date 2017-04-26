@@ -1,9 +1,10 @@
 #ifndef _CM_MANAGER_IFACE_H_
 #define _CM_MANAGER_IFACE_H_
 
+#include "cm_err.h"
 #include "cm_list.h"
 #include "cm_ref.h"
-#include "cm_modem_iface.h"
+#include "cm_modem.h"
 
 struct cm_manager_iface;
 

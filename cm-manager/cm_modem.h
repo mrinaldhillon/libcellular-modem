@@ -64,6 +64,20 @@ struct cm_modem * cm_modem_ref(struct cm_modem *self);
 
 void cm_modem_unref(struct cm_modem *self);
 
+/*
+ * /CMManager/CMManagerInfaceName/Modem#
+ */
+const char * cm_modem_get_path(struct cm_modem *self);
+
+/*
+ * More hardware properties need to be added
+ */
+const char * cm_modem_get_manufacturer(struct cm_modem *self);
+
+const char * cm_modem_get_model(struct cm_modem *self);
+
+const char * cm_modem_get_serial(struct cm_modem *self);
+
 void cm_modem_enable(struct cm_modem *self,
 		     cm_err_t *err);
 void cm_modem_enable_async(struct cm_modem *self,

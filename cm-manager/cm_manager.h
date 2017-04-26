@@ -28,17 +28,26 @@ typedef void(*cm_manager_stop_done)(struct cm_manager *self,
 				cm_err_t err);
 
 struct cm_manager * cm_manager_new(cm_err_t *err);
+
 struct cm_manager * cm_manager_ref(struct cm_manager *self);
+
 void cm_manager_unref(struct cm_manager *self);
+
+/*
+ * Return /CM_MANAGER
+ */
+const char * cm_manager_get_path(struct cm_manager *self);
 
 void cm_manager_start(struct cm_manager *self,
 		      cm_err_t *err);
+
 void cm_manager_start_async(struct cm_manager *self,
 			    cm_manager_start_done done,
 			    void *userdata);
 
 void cm_manager_stop(struct cm_manager *self,
 		     cm_err_t *err);
+
 void cm_manager_stop_async(struct cm_manager *self,
 			   cm_manager_stop_done done,
 			   void *userdata);

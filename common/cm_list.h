@@ -31,5 +31,15 @@
 #define cm_list_for_each_safe		list_for_each_safe
 #define cm_list_for_each_rev		list_for_each_rev
 #define cm_list_for_each_rev_safe	list_for_each_rev_safe
+/*
+struct cm_list {
+	struct _cm_list_head head;
+};
+
+struct cm_list_node {
+	void *data;
+	struct _cm_list_node;
+};
+*/
 
 #endif /* _CM_LIST_H_ */
