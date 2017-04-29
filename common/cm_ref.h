@@ -12,5 +12,6 @@ void cm_ref_get(struct cm_ref *self);
 int cm_ref_peek(struct cm_ref *self);
 int cm_ref_put(struct cm_ref *self,
 		void (*release)(struct cm_ref *self));
+int cm_ref_get_not_zero(struct cm_ref *self);
 
 #endif /* _CM_REF_H_ */

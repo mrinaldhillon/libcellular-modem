@@ -16,11 +16,13 @@
 
 #define CM_LIST_HEAD_INIT		LIST_HEAD_INIT
 #define cm_list_head_init		list_head_init
+#define cm_list_node_init		list_node_init
 
 #define cm_list_add			list_add
 #define cm_list_add_tail		list_add_tail
 #define cm_list_empty			list_empty
 #define cm_list_del			list_del
+#define cm_list_del_init		list_del_init
 
 #define cm_list_entry			list_entry
 #define cm_list_top			list_top
