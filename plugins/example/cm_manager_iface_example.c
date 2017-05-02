@@ -41,7 +41,7 @@ static void cm_manager_iface_release(struct cm_object *cmobj)
 	sem_post(&mutex);
 }
 
-static struct cm_manager_iface *
+/*static struct cm_manager_iface *
 	cm_manager_iface_ref(struct cm_manager_iface *self)
 {
 	assert(NULL != self);
@@ -54,6 +54,20 @@ static void cm_manager_iface_unref(struct cm_manager_iface *self)
 	assert(NULL != self);
 	cm_object_put(&self->cmobj);
 }
+
+static void cm_manager_iface_add(struct cm_manager_iface *self, cm_err_t *err)
+{
+	assert(self);
+	cm_object_add(&self->cmobj, self->cmobj.parent,
+		      self->cmobj.cmset, err, NULL);
+}
+
+static void cm_manager_iface_del(struct cm_manager_iface *self, cm_err_t *err)
+{
+	assert(self);
+	cm_object_del(&self->cmobj);
+}
+*/
 
 static void cm_manager_iface_set_notify_release(struct cm_manager_iface *self,
 				   void (*notify)(struct cm_manager_iface *self,
@@ -103,11 +117,17 @@ struct cm_manager_iface * cm_manager_iface_new()
 
 	cm_object_init(&self->cmobj);
 	self->cmobj.release = &cm_manager_iface_release;
-//	cm_object_add(&self->cmobj, parent, ifaces, PLUGIN_NAME, err);
 
 	self->priv = priv;
-	self->ref = &cm_manager_iface_ref;
+
+/* These ops are redundant since cm_object directly provides these features
+ * though if features the structure requires more than just the object
+ * operations will open these up
+ *	self->ref = &cm_manager_iface_ref;
 	self->unref = &cm_manager_iface_unref;
+	self->add = &cm_manager_iface_add;
+	self->del = &cm_manager_iface_del;
+*/
 	self->get_name = &cm_manager_iface_get_name;
 	self->set_notify_release = &cm_manager_iface_set_notify_release;
 	self->start = &cm_manager_iface_start;

@@ -19,8 +19,6 @@ struct cm_manager_iface {
 	struct cm_object cmobj;
 	struct cm_manager_iface_priv *priv;
 	const char * (*get_name)(struct cm_manager_iface *self);
-	struct cm_manager_iface * (*ref)(struct cm_manager_iface *self);
-	void (*unref)(struct cm_manager_iface *self);
 	void (*set_notify_release)(struct cm_manager_iface *self,
 				   cm_iface_release_notif notif,
 				   void *userdata);
@@ -30,6 +28,12 @@ struct cm_manager_iface {
 			    cm_manager_iface_list_modems_for_each for_each,
 			    void *userdata,
 			    cm_err_t *err);
+/*	struct cm_manager_iface * (*ref)(struct cm_manager_iface *self);
+	void (*unref)(struct cm_manager_iface *self);
+	void (*add)(struct cm_manager_iface *self, cm_err_t *err);
+	void (*del)(struct cm_manager_iface *self, cm_err_t *err);
+	void (*set_name)(struct cm_manager_*self, cm_err_t *err);
+*/
 };
 
 /*

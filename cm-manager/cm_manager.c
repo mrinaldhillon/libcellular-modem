@@ -30,15 +30,15 @@ struct cm_manager_iface_list_entry {
 static void cm_manager_for_each_iface_loaded(struct cm_manager_iface *iface,
 					     void *userdata)
 {
-	assert(iface);
+	struct cm_manager *self = NULL;
+	char *path = NULL;
 	cm_err_t err = CM_ERR_NONE;
 
-	//@todo add a unique id in cm_manager for sanity check
-	struct cm_manager *self = (struct cm_manager *)userdata;
-	char *path = NULL;
-//	struct cm_manager_iface * iface_entry = iface->ref(iface);
-//	cm_list_add(&self->ifaces, &iface_entry->iface_node);
-	iface->ref(iface);
+	assert(iface);
+
+	self = (struct cm_manager *)userdata;
+
+	cm_object_get(&iface->cmobj);
 	cm_object_add(&iface->cmobj, &self->cmobj, self->ifaces, &err,
 		      "%s-%d", iface->get_name(iface),
 		      cm_atomic_inc_and_read(&self->num_ifaces));
@@ -46,13 +46,16 @@ static void cm_manager_for_each_iface_loaded(struct cm_manager_iface *iface,
 		cm_warn("Error in adding iface: %s to ifaces set %d",
 			iface->get_name(iface), err);
 		cm_atomic_dec(&self->num_ifaces);
-		iface->unref(iface);
+		cm_object_put(&iface->cmobj);
 		return;
 	}
 	cm_debug("Loaded manager iface %s", cm_object_get_name(&iface->cmobj));
+
+#if defined(CM_DEBUG)
 	path = cm_object_get_path(&iface->cmobj);
 	cm_debug("Path of iface %s", path);
 	free(path);
+#endif
 }
 
 static void cm_manager_load_plugin_done(void *userdata,
@@ -68,9 +71,8 @@ static void cm_manager_release_for_each_iface(struct cm_object *ifaceobj,
 {
 	assert(ifaceobj);
 	struct cm_manager *self = (struct cm_manager *)userdata;
-	struct cm_manager_iface *iface = to_cm_manager_iface(ifaceobj);
 	cm_object_del(ifaceobj);
-	iface->unref(iface);
+	cm_object_put(ifaceobj);
 
 	cm_atomic_dec(&self->num_ifaces);
 }
@@ -81,13 +83,6 @@ static void cm_manager_release(struct cm_object *cmobj)
 	struct cm_manager *self =
 		cm_container_of(cmobj, struct cm_manager, cmobj);
 
-	//unload modem manager interfaces
-/*	cm_set_for_each_safe(self->ifaces, &cm_manager_release_for_each_iface,
-			     self);
-	if (0 != cm_atomic_read(&self->num_ifaces)) {
-		cm_warn("Could not unload all ifaces");
-	}
-*/
 	cm_debug("destroying cm_manager");
 	free(self);
 }
@@ -160,16 +155,17 @@ static void cm_manager_start_iface(struct cm_object *ifaceobj,
 					     void *userdata)
 {
 	cm_err_t err = CM_ERR_NONE;
+
 	struct cm_manager_iface *iface = to_cm_manager_iface(ifaceobj);
-	assert(iface);
-	iface = iface->ref(iface);
+	/* Get and put are only required in async version of this api */
+	cm_object_get(ifaceobj);
 
 	iface->start(iface, &err);
 	if (CM_ERR_NONE != err) {
 		cm_warn("Could not start manager interface name %s err: %d",
 			cm_object_get_name(&iface->cmobj), err);
 	}
-	iface->unref(iface);
+	cm_object_put(ifaceobj);
 }
 
 void cm_manager_start(struct cm_manager *self,
@@ -184,15 +180,14 @@ static void cm_manager_stop_iface(struct cm_object *ifaceobj,
 {
 	cm_err_t err = CM_ERR_NONE;
 	struct cm_manager_iface *iface = to_cm_manager_iface(ifaceobj);
-	assert(iface);
-	iface = iface->ref(iface);
+	cm_object_get(ifaceobj);
 
 	iface->stop(iface, &err);
 	if (CM_ERR_NONE != err) {
 		cm_warn("Could not stop manager interface name %s err: %d",
 			cm_object_get_name(&iface->cmobj), err);
 	}
-	iface->unref(iface);
+	cm_object_put(ifaceobj);
 }
 
 void cm_manager_stop(struct cm_manager *self,

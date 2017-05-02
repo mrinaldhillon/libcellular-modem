@@ -10,6 +10,7 @@
 #include <link.h>
 #include "cm_err.h"
 #include "cm_log.h"
+#include "cm_object.h"
 #include "cm_manager_iface.h"
 #include "cm_plugin_handler.h"
 
@@ -128,7 +129,7 @@ static void cm_plugin_handler_load_plugin(const char *dirpath,
 
 	if (loaded)
 		loaded(cmm_iface, userdata);
-	cmm_iface->unref(cmm_iface);
+	cm_object_put(&cmm_iface->cmobj);
 
 out_free:
 	if(filepath)
