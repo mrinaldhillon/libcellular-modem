@@ -17,8 +17,10 @@ typedef struct cm_atomic {
 int cm_atomic_read(const cm_atomic_t *v);
 void cm_atomic_set(cm_atomic_t *v, int i);
 void cm_atomic_inc(cm_atomic_t *v);
+int cm_atomic_inc_and_read(cm_atomic_t *v);
 int cm_atomic_inc_not_zero(cm_atomic_t *v);
 void cm_atomic_dec(cm_atomic_t *v);
+int cm_atomic_dec_and_read(cm_atomic_t *v);
 int cm_atomic_dec_and_test(cm_atomic_t *v);
 
 #endif /* _CM_ATOMIC_H_ */

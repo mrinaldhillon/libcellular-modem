@@ -31,8 +31,12 @@ static void cm_plugin_unload(struct cm_manager_iface *cmm_iface,
 			     void *plugin_handle)
 {
 	pthread_t thread_id;
-	pthread_create(&thread_id, NULL,
+	pthread_attr_t attr;
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+	pthread_create(&thread_id, &attr,
 		       cm_plugin_handler_close_plugin, plugin_handle);
+	pthread_attr_destroy(&attr);
 	pthread_detach(thread_id);
 }
 
@@ -51,9 +55,9 @@ struct cm_manager_iface *
 	//@todo:check if sopath exists
 	cm_debug("Loading plugin: %s", sopath);
 	if (0 == load_in_default_namespace)
-		plugin_handle = dlmopen(LM_ID_NEWLM, sopath, RTLD_LAZY);
+		plugin_handle = dlmopen(LM_ID_NEWLM, sopath, RTLD_NOW);
 	else
-		plugin_handle = dlopen(sopath, RTLD_LAZY);
+		plugin_handle = dlopen(sopath, RTLD_NOW);
 	if (NULL == plugin_handle) {
 		cm_error("Unable to open plugin handle %s", dlerror());
 		*err = CM_ERR_MANAGER_PLUGIN_DLOPEN;
@@ -98,7 +102,7 @@ static void cm_plugin_handler_load_plugin(const char *dirpath,
 	// +2 is to compensate for path separartor /.
 	filepath_len = dirpath_len + strlen(filename) + 2;
 
-	filepath = (char *)calloc(filepath_len, 1);
+	filepath = (char *)calloc(filepath_len, sizeof(char));
 	if (NULL == filepath) {
 		cm_error("Not enough space %d", errno);
 		abort();

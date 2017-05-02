@@ -26,6 +26,12 @@ void cm_atomic_inc(cm_atomic_t *v)
 	(void)__sync_fetch_and_add(&v->counter, 1);
 }
 
+int cm_atomic_inc_and_read(cm_atomic_t *v)
+{
+	assert(NULL != v);
+	return (int)__sync_add_and_fetch(&v->counter, 1);
+}
+
 /* @todo: revisit not sure if this will work.
  * the final __sync_synchronize may not be required, just paranoid
  * */
@@ -44,6 +50,12 @@ void cm_atomic_dec(cm_atomic_t *v)
 {
 	assert(NULL != v);
 	(void)__sync_fetch_and_sub(&v->counter, 1);
+}
+
+int cm_atomic_dec_and_read(cm_atomic_t *v)
+{
+	assert(NULL != v);
+	return (int)__sync_sub_and_fetch(&v->counter, 1);
 }
 
 int cm_atomic_dec_and_test(cm_atomic_t *v)
@@ -93,6 +105,17 @@ void cm_atomic_inc(cm_atomic_t *v)
 	pthread_mutex_unlock(&cm_atomic_lock);
 }
 
+int cm_atomic_inc_and_read(cm_atomic_t *v)
+{
+	assert(NULL != v);
+	int value = 0;
+	pthread_mutex_lock(&cm_atomic_lock);
+	v->counter += 1;
+	value = v->counter;
+	pthread_mutex_unlock(&cm_atomic_lock);
+	return value;
+}
+
 int cm_atomic_inc_not_zero(cm_atomic_t *v)
 {
 	int incremented = 0;
@@ -104,6 +127,17 @@ int cm_atomic_inc_not_zero(cm_atomic_t *v)
 	}
 	pthread_mutex_unlock(&cm_atomic_lock);
 	return incremented;
+}
+
+int cm_atomic_dec_and_read(cm_atomic_t *v)
+{
+	assert(NULL != v);
+	int value = 0;
+	pthread_mutex_lock(&cm_atomic_lock);
+	v->counter -= 1;
+	value = v->counter;
+	pthread_mutex_unlock(&cm_atomic_lock);
+	return value;
 }
 
 void cm_atomic_dec(cm_atomic_t *v)

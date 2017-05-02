@@ -29,7 +29,7 @@ static void testref_release(struct cm_ref *ref)
 
 static struct testref * testref_new(void)
 {
-	struct testref *obj = (struct testref *)calloc(sizeof(*obj), 1);
+	struct testref *obj = (struct testref *)calloc(1, sizeof(*obj));
 	if (NULL == obj)
 		abort();
 	obj->i = 1;

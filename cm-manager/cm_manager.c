@@ -10,6 +10,8 @@
 #include "cm_manager_private.h"
 #include "cm_plugin_handler.h"
 #include "cm_modem.h"
+#include "cm_atomic.h"
+#include "cm_object.h"
 
 #if !defined(CM_PLUGINS_DIR)
 #define CM_PLUGINS_DIR		"install/usr/lib/cm-manager"
@@ -28,66 +30,108 @@ struct cm_manager_iface_list_entry {
 static void cm_manager_for_each_iface_loaded(struct cm_manager_iface *iface,
 					     void *userdata)
 {
-	assert(NULL != iface);
+	assert(iface);
+	cm_err_t err = CM_ERR_NONE;
 
 	//@todo add a unique id in cm_manager for sanity check
 	struct cm_manager *self = (struct cm_manager *)userdata;
-	struct cm_manager_iface * iface_entry = iface->ref(iface);
-	cm_list_add(&self->ifaces, &iface_entry->iface_node);
-	cm_debug("Loaded manager iface %s", iface->get_name(iface));
-	self->num_ifaces++;
+	char *path = NULL;
+//	struct cm_manager_iface * iface_entry = iface->ref(iface);
+//	cm_list_add(&self->ifaces, &iface_entry->iface_node);
+	iface->ref(iface);
+	cm_object_add(&iface->cmobj, &self->cmobj, self->ifaces, &err,
+		      "%s-%d", iface->get_name(iface),
+		      cm_atomic_inc_and_read(&self->num_ifaces));
+	if (CM_ERR_NONE != err) {
+		cm_warn("Error in adding iface: %s to ifaces set %d",
+			iface->get_name(iface), err);
+		cm_atomic_dec(&self->num_ifaces);
+		iface->unref(iface);
+		return;
+	}
+	cm_debug("Loaded manager iface %s", cm_object_get_name(&iface->cmobj));
+	path = cm_object_get_path(&iface->cmobj);
+	cm_debug("Path of iface %s", path);
+	free(path);
 }
 
 static void cm_manager_load_plugin_done(void *userdata,
 					cm_err_t err)
 {
 	struct cm_manager *self = (struct cm_manager *)userdata;
-	cm_debug("Done loading %u cm manager ifaces with err: %d\n",
-		 self->num_ifaces, err);
+	cm_debug("Done loading %d cm manager ifaces with err: %d\n",
+		 cm_atomic_read(&self->num_ifaces), err);
 }
 
-static void cm_manager_release(struct cm_ref *ref)
+static void cm_manager_release_for_each_iface(struct cm_object *ifaceobj,
+					      void *userdata)
 {
-	assert(NULL != ref);
+	assert(ifaceobj);
+	struct cm_manager *self = (struct cm_manager *)userdata;
+	struct cm_manager_iface *iface = to_cm_manager_iface(ifaceobj);
+	cm_object_del(ifaceobj);
+	iface->unref(iface);
+
+	cm_atomic_dec(&self->num_ifaces);
+}
+
+static void cm_manager_release(struct cm_object *cmobj)
+{
+	assert(NULL != cmobj);
 	struct cm_manager *self =
-		cm_container_of(ref, struct cm_manager, refcount);
-	struct cm_manager_iface *iface = NULL, *next = NULL;
+		cm_container_of(cmobj, struct cm_manager, cmobj);
 
 	//unload modem manager interfaces
-	cm_list_for_each_safe(&self->ifaces, iface, next, iface_node) {
-		cm_list_del(&iface->iface_node);
-		iface->unref(iface);
+/*	cm_set_for_each_safe(self->ifaces, &cm_manager_release_for_each_iface,
+			     self);
+	if (0 != cm_atomic_read(&self->num_ifaces)) {
+		cm_warn("Could not unload all ifaces");
 	}
-
+*/
 	cm_debug("destroying cm_manager");
 	free(self);
+}
+
+static void cm_manager_cleanup(struct cm_manager *self)
+{
+	cm_set_for_each_safe(self->ifaces, &cm_manager_release_for_each_iface,
+			     self);
+	if (0 != cm_atomic_read(&self->num_ifaces)) {
+		cm_warn("Could not unload all ifaces");
+	}
+	cm_set_del(self->ifaces);
+	cm_set_put(self->ifaces);
 }
 
 struct cm_manager * cm_manager_new(cm_err_t *err)
 {
 	struct cm_manager *self =
-		(struct cm_manager *)calloc(sizeof(*self), 1);
+		(struct cm_manager *)calloc(1, sizeof(*self));
 	if (NULL == self) {
-		cm_error("Not enough space %d",errno);
+		cm_error("Unable to allocate enough space %d",errno);
 		abort();
 	}
 
-	cm_list_head_init(&self->ifaces);
+	cm_object_init(&self->cmobj);
+	cm_object_set_name(&self->cmobj, "CMManager");
+	self->cmobj.release = &cm_manager_release;
+	self->ifaces = cm_set_create("CMManagerIfaces");
+	cm_atomic_set(&self->num_ifaces, 0);
+	cm_set_add(self->ifaces, &self->cmobj, NULL, err);
 	//unload modem manager interfaces
 	cm_plugin_handler_load_from_dir(CM_PLUGINS_DIR, 1,
 					&cm_manager_for_each_iface_loaded,
 					&cm_manager_load_plugin_done,
 					self, err);
-	if (CM_ERR_NONE != *err) {
+	if (!CM_ERR_NONE && *err) {
 		cm_error("Could not load cm manager plugin interfaces %d",
 			 *err);
-		goto out_free;
+		goto out_unref;
 	}
 
-	cm_ref_init(&self->refcount);
 	return self;
-out_free:
-	free(self);
+out_unref:
+	cm_manager_unref(self);
 	return NULL;
 }
 
@@ -95,53 +139,68 @@ struct cm_manager * cm_manager_ref(struct cm_manager *self)
 {
 	assert(NULL != self);
 	//@tbd: how to handle ref count of ifaces
-	cm_ref_get(&self->refcount);
+	cm_object_get(&self->cmobj);
 	return self;
 }
 
 void cm_manager_unref(struct cm_manager *self)
 {
 	assert(NULL != self);
-	cm_ref_put(&self->refcount, &cm_manager_release);
+	cm_object_put(&self->cmobj);
 }
 
+void cm_manager_destroy(struct cm_manager *self)
+{
+	assert(self);
+	cm_manager_cleanup(self);
+	cm_object_put(&self->cmobj);
+}
+
+static void cm_manager_start_iface(struct cm_object *ifaceobj,
+					     void *userdata)
+{
+	cm_err_t err = CM_ERR_NONE;
+	struct cm_manager_iface *iface = to_cm_manager_iface(ifaceobj);
+	assert(iface);
+	iface = iface->ref(iface);
+
+	iface->start(iface, &err);
+	if (CM_ERR_NONE != err) {
+		cm_warn("Could not start manager interface name %s err: %d",
+			cm_object_get_name(&iface->cmobj), err);
+	}
+	iface->unref(iface);
+}
 
 void cm_manager_start(struct cm_manager *self,
 		      cm_err_t *err)
 {
-	assert(NULL != self && NULL != err &&
-	       1 != cm_list_empty(&self->ifaces));
-	struct cm_manager_iface *iface = NULL, *next = NULL;
+	assert(self && err && 0 < cm_atomic_read(&self->num_ifaces));
+	cm_set_for_each(self->ifaces, &cm_manager_start_iface, self);
+}
 
-	//unload modem manager interfaces
-	cm_list_for_each_safe(&self->ifaces, iface, next, iface_node) {
-		//@todo create joinable pthreads for concurrent start
-		iface->ref(iface)->start(iface, err);
-		if (CM_ERR_NONE != *err) {
-			cm_warn("Could not start manager interface name %s err: %d",
-				iface->get_name(iface), *err);
-		}
-		iface->unref(iface);
+static void cm_manager_stop_iface(struct cm_object *ifaceobj,
+					     void *userdata)
+{
+	cm_err_t err = CM_ERR_NONE;
+	struct cm_manager_iface *iface = to_cm_manager_iface(ifaceobj);
+	assert(iface);
+	iface = iface->ref(iface);
+
+	iface->stop(iface, &err);
+	if (CM_ERR_NONE != err) {
+		cm_warn("Could not stop manager interface name %s err: %d",
+			cm_object_get_name(&iface->cmobj), err);
 	}
+	iface->unref(iface);
 }
 
 void cm_manager_stop(struct cm_manager *self,
 		     cm_err_t *err)
 {
-	assert(NULL != self && NULL != err &&
-	       1 != cm_list_empty(&self->ifaces));
-	struct cm_manager_iface *iface = NULL, *next = NULL;
+	assert(self && err && 0 < cm_atomic_read(&self->num_ifaces));
+	cm_set_for_each(self->ifaces, &cm_manager_stop_iface, self);
 
-	//unload modem manager interfaces
-	cm_list_for_each_safe(&self->ifaces, iface, next, iface_node) {
-		//@todo create joinable pthreads for concurrent stop
-		iface->ref(iface)->stop(iface, err);
-		if (CM_ERR_NONE != *err) {
-			cm_warn("Could not stop manager interface name %s err: %d",
-				iface->get_name(iface), *err);
-		}
-		iface->unref(iface);
-	}
 }
 #if 0
 struct cm_manager_list_for_each_ctx {

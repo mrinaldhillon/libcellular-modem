@@ -1,17 +1,16 @@
 include $(TLR_BASE)/build/rds00008.mk
 
-CCAN_DIR=$(TLR_BASE)/lib/ccan/ccan
+CCAN_DIR=$(TLR_BASE)/lib/ccan/
 
-INCLUDE=-I. -I$(CCAN_DIR)/list \
-	-I$(CCAN_DIR)/container_of
+INCLUDE=-I. -I$(CCAN_DIR)
 
-LIBOBJS=./cm_atomic.o ./cm_ref.o
+LIBOBJS=./cm_atomic.o ./cm_ref.o ./cm_object.o
 
 ifeq ($(DEBUG),true)
 CFLAGS += -g
 endif
 
-CFLAGS += -fPIC $(INCLUDE)
+CFLAGS += -fPIC $(INCLUDE) -DCM_DEBUG
 
 .PHONY: all clean
 

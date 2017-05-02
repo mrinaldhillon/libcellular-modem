@@ -33,7 +33,10 @@ INCLUDE=-I. -I$(COMMON_DIR) \
 	-I $(CCAN_DIR)
 
 
-COMMON_LIBS=$(COMMON_DIR)/cm_atomic.o $(COMMON_DIR)/cm_ref.o
+COMMON_LIBS=$(COMMON_DIR)/cm_atomic.o \
+	    $(COMMON_DIR)/cm_ref.o \
+	    $(COMMON_DIR)/cm_object.o
+
 LIBOBJS = ./cm_plugin_handler.o ./cm_manager.o
 LIBRARY=libcm-manager.so
 

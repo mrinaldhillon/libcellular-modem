@@ -13,7 +13,7 @@ ifeq ($(DEBUG),true)
 CFLAGS += -g
 endif
 
-CFLAGS += $(INCLUDE) -DCM_DEBUG 
+CFLAGS += -rdynamic $(INCLUDE) -DCM_DEBUG 
 
 .PHONY: all clean
 
