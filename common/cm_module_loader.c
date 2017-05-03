@@ -81,24 +81,28 @@ void cm_module_loader_load_from_dirpath(const char *dirpath,
 					   err);
 		free(filepath);
 		filepath = NULL;
-
-		if (CM_ERR_NONE == *err) {
-			num_loaded += 1;
-			if (loaded)
-				loaded(module, userdata);
-			// reduce refcount here since callee of loaded may have
-			// taken one, else this module is discarded
-			cm_object_put(&module->cmobj);
-		} else {
-			// @todo add some error
+		if (CM_ERR_NONE != *err) {
+			cm_error("Error in loading shared libary name:%s \
+				 under directory:%s %d", dirpath,
+				 dirent->d_name, *err);
 			goto out_closedir;
+		}
+		if (loaded)
+			loaded(module, userdata, err);
+		// reduce refcount here since callee of loaded may have
+		// taken one, else this module is discarded
+		cm_object_put(&module->cmobj);
+		if (CM_ERR_NONE != *err) {
+			cm_error("Error returned from module_loaded_for_each \
+				 callback for libary name:%s from directory:%s %d",
+				 dirpath, dirent->d_name, *err);
 			break;
 		}
+		num_loaded += 1;
 	}
 	// if no plugins found than this definitely treated as an error.
 	if (0 == num_loaded) {
-		cm_error("No plugins found at %s", dirpath);
-		//@tbd: this is probably not required, since error is already set
+		cm_error("No module loaded under directory: %s", dirpath);
 		*err |= CM_ERR_MODULE_LOADER_ELIBACC;
 	}
 
