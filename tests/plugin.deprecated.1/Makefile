@@ -7,13 +7,14 @@ INCLUDE=-I$(TLR_BASE)/cm-manager -I$(TLR_BASE)/common -I$(TLR_BASE)/lib/ccan
 COMMON_LIBS=$(TLR_BASE)/common
 CM_MANAGER_LIBS=$(TLR_BASE)/cm-manager
 
-OBJS= $(COMMON_LIBS)/cm_atomic.o $(COMMON_LIBS)/cm_ref.o $(CM_MANAGER_LIBS)/cm_plugin_handler.o
+OBJS= $(COMMON_LIBS)/cm_atomic.o $(COMMON_LIBS)/cm_ref.o \
+      $(COMMON_LIBS)/cm_object.o $(CM_MANAGER_LIBS)/cm_plugin_handler.o
 
 ifeq ($(DEBUG),true)
 CFLAGS += -g
 endif
 
-CFLAGS += $(INCLUDE) -DCM_DEBUG 
+CFLAGS += -rdynamic $(INCLUDE) -DCM_DEBUG 
 
 .PHONY: all clean
 

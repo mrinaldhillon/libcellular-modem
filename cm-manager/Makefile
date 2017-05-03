@@ -32,9 +32,13 @@ INCLUDE=-I. -I$(COMMON_DIR) \
 	-I $(CCAN_DIR)/ccan/container_of \
 	-I $(CCAN_DIR)
 
+COMMON_LIBS=$(COMMON_DIR)/cm_atomic.o \
+	    $(COMMON_DIR)/cm_ref.o \
+	    $(COMMON_DIR)/cm_object.o \
+	    $(COMMON_DIR)/cm_module.o \
+	    $(COMMON_DIR)/cm_module_loader.o
 
-COMMON_LIBS=$(COMMON_DIR)/cm_atomic.o $(COMMON_DIR)/cm_ref.o
-LIBOBJS = ./cm_plugin_handler.o ./cm_manager.o
+LIBOBJS = ./cm_manager.o
 LIBRARY=libcm-manager.so
 
 ifeq ($(DEBUG),true)

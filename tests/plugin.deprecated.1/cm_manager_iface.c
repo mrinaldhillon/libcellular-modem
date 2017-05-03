@@ -25,7 +25,7 @@ int main()
 {
 	cm_err_t err = CM_ERR_NONE;
 
-	cm_plugin_handler_load_from_dir(PLUGINS_DIR, 0,
+	cm_plugin_handler_load_from_dir(PLUGINS_DIR, 1,
 					&test_for_each_loaded,
 					&test_load_plugin_done,
 					"1st iface", &err);

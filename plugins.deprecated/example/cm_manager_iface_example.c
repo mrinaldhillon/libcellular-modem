@@ -4,7 +4,7 @@
 #include <errno.h>
 #include "cm_err.h"
 #include "cm_log.h"
-#include "cm_ref.h"
+#include "cm_atomic.h"
 #include "cm_container_of.h"
 #include "cm_manager_iface.h"
 #include "cm_manager_iface_example_priv.h"
@@ -26,11 +26,11 @@ __attribute__((destructor)) void cm_manager_iface_destructor(void)
 	sem_destroy(&mutex);
 }
 
-static void cm_manager_iface_release(struct cm_ref *ref)
+static void cm_manager_iface_release(struct cm_object *cmobj)
 {
-	assert(NULL != ref);
+	assert(NULL != cmobj);
 	struct cm_manager_iface *self =
-		cm_container_of(ref, struct cm_manager_iface, refcount);
+		cm_container_of(cmobj, struct cm_manager_iface, cmobj);
 
 	if (self->priv->notif) {
 		self->priv->notif(self, self->priv->userdata);
@@ -41,19 +41,33 @@ static void cm_manager_iface_release(struct cm_ref *ref)
 	sem_post(&mutex);
 }
 
-static struct cm_manager_iface *
+/*static struct cm_manager_iface *
 	cm_manager_iface_ref(struct cm_manager_iface *self)
 {
 	assert(NULL != self);
-	cm_ref_get(&self->refcount);
+	cm_object_get(&self->cmobj);
 	return self;
 }
 
 static void cm_manager_iface_unref(struct cm_manager_iface *self)
 {
 	assert(NULL != self);
-	cm_ref_put(&self->refcount, &cm_manager_iface_release);
+	cm_object_put(&self->cmobj);
 }
+
+static void cm_manager_iface_add(struct cm_manager_iface *self, cm_err_t *err)
+{
+	assert(self);
+	cm_object_add(&self->cmobj, self->cmobj.parent,
+		      self->cmobj.cmset, err, NULL);
+}
+
+static void cm_manager_iface_del(struct cm_manager_iface *self, cm_err_t *err)
+{
+	assert(self);
+	cm_object_del(&self->cmobj);
+}
+*/
 
 static void cm_manager_iface_set_notify_release(struct cm_manager_iface *self,
 				   void (*notify)(struct cm_manager_iface *self,
@@ -86,25 +100,34 @@ static void cm_manager_iface_stop(struct cm_manager_iface *self, cm_err_t *err)
 	cm_debug("Stopping interface %s", PLUGIN_NAME);
 }
 
-struct cm_manager_iface * cm_manager_iface_new(void)
+struct cm_manager_iface * cm_manager_iface_new()
 {
 	struct cm_manager_iface_priv *priv =
 		(struct cm_manager_iface_priv *)calloc(1, sizeof(*priv));
 	if (NULL == priv) {
-		cm_error("Not enough space %d",errno);
+		cm_error("Unable to allocate enough space %d",errno);
 		abort();
 	}
 	struct cm_manager_iface *self =
 		(struct cm_manager_iface *)calloc(1, sizeof(*self));
 	if (NULL == self) {
-		cm_error("Not enough space %d",errno);
+		cm_error("Unabel to allocate enough space %d",errno);
 		abort();
 	}
 
-	cm_ref_init(&self->refcount);
+	cm_object_init(&self->cmobj);
+	self->cmobj.release = &cm_manager_iface_release;
+
 	self->priv = priv;
-	self->ref = &cm_manager_iface_ref;
+
+/* These ops are redundant since cm_object directly provides these features
+ * though if features the structure requires more than just the object
+ * operations will open these up
+ *	self->ref = &cm_manager_iface_ref;
 	self->unref = &cm_manager_iface_unref;
+	self->add = &cm_manager_iface_add;
+	self->del = &cm_manager_iface_del;
+*/
 	self->get_name = &cm_manager_iface_get_name;
 	self->set_notify_release = &cm_manager_iface_set_notify_release;
 	self->start = &cm_manager_iface_start;
@@ -113,5 +136,3 @@ struct cm_manager_iface * cm_manager_iface_new(void)
 	sem_wait(&mutex);
 	return self;
 }
-
-

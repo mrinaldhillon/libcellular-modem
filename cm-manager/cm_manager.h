@@ -33,6 +33,8 @@ struct cm_manager * cm_manager_ref(struct cm_manager *self);
 
 void cm_manager_unref(struct cm_manager *self);
 
+void cm_manager_destroy(struct cm_manager *self);
+
 /*
  * Return /CM_MANAGER
  */

@@ -18,6 +18,12 @@ void cm_ref_get(struct cm_ref *self)
 	cm_atomic_inc(&self->refcount);
 }
 
+int cm_ref_get_not_zero(struct cm_ref *self)
+{
+	assert(NULL != self);
+	return cm_atomic_inc_not_zero(&self->refcount);
+}
+
 int cm_ref_peek(struct cm_ref *self)
 {
 	assert(NULL != self);
