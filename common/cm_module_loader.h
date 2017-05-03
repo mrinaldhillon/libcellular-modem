@@ -4,7 +4,8 @@
 #include "cm_module.h"
 
 typedef void (*for_each_module_loaded)(struct cm_module *module,
-				void *userdata);
+				void *userdata,
+				cm_err_t *err);
 typedef void (*load_modules_done)(void *userdata,
 				cm_err_t err);
 

@@ -4,7 +4,7 @@ export TLR_BASE
 
 include $(TLR_BASE)/build/makefile.globals
 
-TARGETS += ../common ../cm-manager ../plugins ../tests
+TARGETS += ../common ../cm-manager ../modules ../tests
 
 TARGETS_CLEAN = $(addsuffix .clean,$(TARGETS) $(CLEAN_TARGETS))
 TARGETS_INSTALL = $(addsuffix .install,$(TARGETS) )
@@ -21,7 +21,7 @@ all: $(TARGETS)
 	$(MAKE) -C $@ all
 ../cm-manager:
 	$(MAKE) -C $@ all install
-../plugins:
+../modules:
 	$(MAKE) -C $@ all install
 ../tests:
 	$(MAKE) -C $@ all
