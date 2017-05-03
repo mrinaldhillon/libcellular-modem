@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <errno.h>
+#include <dlfcn.h>
+#include <link.h>
 #include "cm_err.h"
 #include "cm_log.h"
 #include "cm_ref.h"
@@ -8,7 +10,8 @@
 #include "cm_container_of.h"
 #include "cm_manager.h"
 #include "cm_manager_private.h"
-#include "cm_plugin_handler.h"
+#include "cm_module.h"
+#include "cm_module_loader.h"
 #include "cm_modem.h"
 #include "cm_atomic.h"
 #include "cm_object.h"
@@ -27,35 +30,79 @@ struct cm_manager_iface_list_entry {
 	struct cm_list_node node;
 };*/
 
-static void cm_manager_for_each_iface_loaded(struct cm_manager_iface *iface,
-					     void *userdata)
-{
-	struct cm_manager *self = NULL;
-	char *path = NULL;
-	cm_err_t err = CM_ERR_NONE;
+typedef struct cm_manager_iface *
+(*cm_manager_iface_create)(struct cm_module *module);
 
-	assert(iface);
+static struct cm_manager_iface *
+cm_manager_load_iface_from_module(struct cm_module *module,
+				  cm_err_t *err)
+{
+	char *error = NULL;
+	struct cm_manager_iface *iface = NULL;
+	cm_manager_iface_create iface_create = NULL;
+	iface_create = dlsym(module->handle, module->module_entry_symbol);
+	if (NULL != (error = dlerror())) {
+		cm_error("Symbol for cm_manager iface create \"%s\" not found %s",
+			 module->module_entry_symbol, error);
+		*err |= CM_ERR_MODULE_LOADER_DLSYM;
+		return NULL;
+	}
+	iface = iface_create(module);
+	return iface;
+}
+
+static void cm_manager_for_each_module_loaded(struct cm_module *module,
+					     void *userdata,
+					     cm_err_t *err)
+{
+	int num_ifaces = 0;
+	struct cm_manager *self = NULL;
+	struct cm_manager_iface *iface = NULL;
+
+	assert(module);
 
 	self = (struct cm_manager *)userdata;
-
-	cm_object_get(&iface->cmobj);
-	cm_object_add(&iface->cmobj, &self->cmobj, self->ifaces, &err,
-		      "%s-%d", iface->get_name(iface),
-		      cm_atomic_inc_and_read(&self->num_ifaces));
-	if (CM_ERR_NONE != err) {
-		cm_warn("Error in adding iface: %s to ifaces set %d",
-			iface->get_name(iface), err);
-		cm_atomic_dec(&self->num_ifaces);
-		cm_object_put(&iface->cmobj);
-		return;
+	num_ifaces = cm_atomic_inc_and_read(&self->num_ifaces);
+	/* add module to under cm manager */
+	cm_object_add(&module->cmobj, &self->cmobj, NULL, err,
+		      "CMModule-%d", num_ifaces);
+	if (CM_ERR_NONE != *err) {
+		cm_error("Error in adding cmmanager iface(class name: %s) \
+			 to ifaces set %d", iface->get_name(iface), *err);
+		goto out_dec_numifaces;
 	}
-	cm_debug("Loaded manager iface %s", cm_object_get_name(&iface->cmobj));
+
+	iface = cm_manager_load_iface_from_module(module, err);
+	if (CM_ERR_NONE != *err) {
+		cm_error("Error in loading new cmmanager interface \
+			 from module %d", *err);
+		goto out_delmodule;
+	}
+
+	/* add iface under cm manager */
+	cm_object_add(&iface->cmobj, &self->cmobj, self->ifaces, err,
+		      "%s-%d", iface->get_name(iface),
+		      cm_atomic_read(&self->num_ifaces));
+	if (CM_ERR_NONE != *err) {
+		cm_error("Error in adding cmmanager iface(class name: %s) \
+			 to ifaces set %d", iface->get_name(iface), *err);
+		goto out_putiface;
+	}
 
 #if defined(CM_DEBUG)
+	char *path = NULL;
 	path = cm_object_get_path(&iface->cmobj);
 	cm_debug("Path of iface %s", path);
 	free(path);
 #endif
+	cm_debug("Loaded manager iface %s", cm_object_get_name(&iface->cmobj));
+	return;
+out_putiface:
+	cm_object_put(&iface->cmobj);
+out_delmodule:
+	cm_object_del(&module->cmobj);
+out_dec_numifaces:
+	cm_atomic_dec(&self->num_ifaces);
 }
 
 static void cm_manager_load_plugin_done(void *userdata,
@@ -114,8 +161,8 @@ struct cm_manager * cm_manager_new(cm_err_t *err)
 	cm_atomic_set(&self->num_ifaces, 0);
 	cm_set_add(self->ifaces, &self->cmobj, NULL, err);
 	//unload modem manager interfaces
-	cm_plugin_handler_load_from_dir(CM_PLUGINS_DIR, 1,
-					&cm_manager_for_each_iface_loaded,
+	cm_module_loader_load_from_dirpath(CM_PLUGINS_DIR, 1,
+					&cm_manager_for_each_module_loaded,
 					&cm_manager_load_plugin_done,
 					self, err);
 	if (!CM_ERR_NONE && *err) {
