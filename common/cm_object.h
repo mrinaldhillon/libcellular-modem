@@ -1,6 +1,7 @@
 #ifndef _CM_OBJECT_H_
 #define _CM_OBJECT_H_
 
+#include <pthread.h>
 #include "cm_err.h"
 #include "cm_ref.h"
 #include "cm_list.h"
@@ -70,7 +71,6 @@ char * cm_object_get_path(struct cm_object *self);
 
 /* cm_set is tighly coupled with cm_object
  * hence keeping in same file */
-
 struct cm_set {
 	// head of the list
 	struct cm_list_head list;

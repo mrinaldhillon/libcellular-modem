@@ -4,10 +4,10 @@ include $(TLR_BASE)/build/rds00008.mk
 
 all:
 	cd common; make all;
-	cd plugin; make all;
 	cd cm-manager; make all;
+	cd plugin; make all;
 clean:
 	cd common; make clean;
-	cd plugin; make clean;
 	cd cm-manager; make clean;
+	cd plugin; make clean;
 

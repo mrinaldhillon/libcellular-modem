@@ -4,7 +4,7 @@ CCAN_DIR=$(TLR_BASE)/lib/ccan/
 
 INCLUDE=-I. -I$(CCAN_DIR)
 
-LIBOBJS=./cm_atomic.o ./cm_ref.o ./cm_object.o
+LIBOBJS=./cm_atomic.o ./cm_ref.o ./cm_object.o ./cm_module.o ./cm_module_loader.o
 
 ifeq ($(DEBUG),true)
 CFLAGS += -g
