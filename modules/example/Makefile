@@ -2,6 +2,7 @@ include $(TLR_BASE)/build/rds00008.mk
 
 INCLUDES_DIR=.
 LIBCM_MANAGER_INC_DIR=$(TLR_BASE)/cm-manager
+CMMODEM_DIR=$(TLR_BASE)/cm-modem
 LIBS_DIR=.
 COMMON_DIR=$(TLR_BASE)/common
 COMMON_LIBS=$(COMMON_DIR)/cm_atomic.o \
@@ -9,7 +10,8 @@ COMMON_LIBS=$(COMMON_DIR)/cm_atomic.o \
 	    $(COMMON_DIR)/cm_object.o
 
 
-INCLUDE=-I$(LIBCM_MANAGER_INC_DIR) -I$(INCLUDES_DIR)\
+INCLUDE=-I$(LIBCM_MANAGER_INC_DIR) -I$(CMMODEM_DIR) \
+	-I$(INCLUDES_DIR)\
 	-I$(TLR_BASE)/lib/ccan\
 	-I$(COMMON_DIR)
 

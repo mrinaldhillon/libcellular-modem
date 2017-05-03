@@ -2,23 +2,21 @@ include $(TLR_BASE)/build/rds00008.mk
 
 CCAN_DIR=$(TLR_BASE)/lib/ccan
 COMMON_DIR=$(TLR_BASE)/common
-CMMODEM_DIR=$(TLR_BASE)/cm-modem
 
 INCLUDES=$(COMMON_DIR)/cm_err.h \
 	$(COMMON_DIR)/cm_log.h \
-	./cm_manager.h \
-	$(CMMODEM_DIR)/cm_modem.h \
-	$(CMMODEM_DIR)/cm_modem_state.h \
-	$(CMMODEM_DIR)/cm_bearer.h \
-	$(CMMODEM_DIR)/cm_bearer_properties.h \
-	$(CMMODEM_DIR)/cm_bearer_ip_config.h \
-	$(CMMODEM_DIR)/cm_bearer_stats.h \
-	$(CMMODEM_DIR)/cm_bearer_state.h \
-	$(CMMODEM_DIR)/cm_ip_type.h \
-	$(CMMODEM_DIR)/cm_signal.h \
-	$(CMMODEM_DIR)/cm_signal_type.h \
-	$(CMMODEM_DIR)/cm_sim.h \
-	$(CMMODEM_DIR)/cm_messaging.h
+	./cm_modem.h \
+	./cm_modem_state.h \
+	./cm_bearer.h \
+	./cm_bearer_properties.h \
+	./cm_bearer_ip_config.h \
+	./cm_bearer_stats.h \
+	./cm_bearer_state.h \
+	./cm_ip_type.h \
+	./cm_signal.h \
+	./cm_signal_type.h \
+	./cm_sim.h \
+	./cm_messaging.h
 	
 
 #	$(COMMON_DIR)/cm_list.h \
@@ -29,34 +27,29 @@ INCLUDES=$(COMMON_DIR)/cm_err.h \
 	$(CCAN_DIR)/ccan/str/str.h
 
 INCLUDE=-I. -I$(COMMON_DIR) \
-	-I$(TLR_BASE)/cm-modem \
-	-I$(CCAN_DIR)/ccan/list \
-	-I$(CCAN_DIR)/ccan/container_of \
-	-I$(CCAN_DIR)
+	-I $(CCAN_DIR)/ccan/list \
+	-I $(CCAN_DIR)/ccan/container_of \
+	-I $(CCAN_DIR)
 
 COMMON_LIBS=$(COMMON_DIR)/cm_atomic.o \
 	    $(COMMON_DIR)/cm_ref.o \
-	    $(COMMON_DIR)/cm_object.o \
-	    $(COMMON_DIR)/cm_module.o \
-	    $(COMMON_DIR)/cm_module_loader.o
+	    $(COMMON_DIR)/cm_object.o
 
-LIBOBJS=./cm_manager.o
-LIBRARY=libcm-manager.so
-CFLAGS=
+LIBOBJS = 
+
 ifeq ($(DEBUG),true)
-CFLAGS += -g -DCM_DEBUG
+CFLAGS += -g
 endif
 
-CFLAGS += -fPIC $(INCLUDE)
-LDFLAGS= -lpthread -ldl
+CFLAGS += -fPIC $(INCLUDE) -DCM_DEBUG
 
 .PHONY: all clean install
 
 all: $(LIBRARY)
 
-$(LIBRARY): $(LIBOBJS) $(COMMON_LIBS)
+$(LIBRARY):$(LIBOBJS) $(COMMON_LIBS)
 	echo "install root $(INSTALL_ROOT)"
-	$(CC) -Wl,-soname,$(LIBRARY) -shared $^ -o $@ $(LDFLAGS)
+	$(CC) -Wl,-soname,$(LIBRARY) -shared $^ -o $@ $(LDFLAGS) -lpthread -ldl
 
 -include $(LIBOBJS:.o=.d)
 

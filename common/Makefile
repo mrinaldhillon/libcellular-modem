@@ -21,4 +21,4 @@ $(LIBOBJS): %.o: %.c
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 clean:
-	rm -f $(LIBOBJS) $(LIBS_DIR)/*.d
+	rm -f $(LIBOBJS) ./*.d

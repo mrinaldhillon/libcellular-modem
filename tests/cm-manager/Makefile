@@ -13,8 +13,7 @@ CFLAGS += -I$(INSTALL_ROOT)/usr/include -DCM_DEBUG
 all: $(CM_MANAGER_BIN) 
 
 $(CM_MANAGER_BIN):
-	$(CC) $(CM_MANAGER_BIN).c -o $@ $^ $(CFLAGS) \
-		-L $(INSTALL_ROOT)/usr/lib/ -lcm-manager -rdynamic
+	$(CC) $(CM_MANAGER_BIN).c -o $@ $(CFLAGS) -L $(INSTALL_ROOT)/usr/lib/ -lcm-manager
 
 clean:
 	rm -f $(CM_MANAGER_BIN) ./*.d
