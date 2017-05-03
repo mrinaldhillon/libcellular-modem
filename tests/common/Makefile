@@ -14,8 +14,8 @@ CMOBJECT_OBJS=$(CMREF_OBJS) $(COMMON_LIBS)/cm_object.o
 CMMODULE_OBJS=$(CMOBJECT_OBJS) $(COMMON_LIBS)/cm_module.o \
 	      $(COMMON_LIBS)/cm_module_loader.o
 
-CMMODULE_EXAMPLE_SO=libcm-module-example.so
-CMMODULE_EXAMPLE_SO_OBJS=libcm_module_example.o
+CMMODULE_FOO_SO=libcm-module-foo.so
+CMMODULE_FOO_SO_OBJS=libcm_module_foo.o
 
 ifeq ($(DEBUG),true)
 CFLAGS += -g
@@ -25,7 +25,7 @@ CFLAGS += $(INCLUDE) -DCM_DEBUG
 
 .PHONY: all clean
 
-all: $(CMATOMIC_BIN) $(CMREF_BIN) $(CMLOG_BIN) $(CMMODULE_BIN) $(CMMODULE_EXAMPLE_SO)
+all: $(CMATOMIC_BIN) $(CMREF_BIN) $(CMLOG_BIN) $(CMMODULE_BIN) $(CMMODULE_FOO_SO)
 
 $(CMATOMIC_BIN): $(CMATOMIC_OBJS)
 	$(CC) $(CMATOMIC_BIN).c -o $@ $^ $(CFLAGS)
@@ -35,13 +35,13 @@ $(CMLOG_BIN):
 	$(CC) $(CMLOG_BIN).c -o $@ $(CFLAGS)
 $(CMMODULE_BIN): $(CMMODULE_OBJS)
 	$(CC) $(CMMODULE_BIN).c -o $@ $^ $(CFLAGS) -ldl -lpthread
-$(CMMODULE_EXAMPLE_SO): $(CMMODULE_EXAMPLE_SO_OBJS)
-	$(CC) -Wl,-soname,$(CMMODULE_EXAMPLE_SO) -shared $^ -o $@
+$(CMMODULE_FOO_SO): $(CMMODULE_FOO_SO_OBJS)
+	$(CC) -Wl,-soname,$(CMMODULE_FOO_SO) -shared $^ -o $@
 
 # Dependancy rule
--include $(CMMODULE_EXAMPLE_SO_OBJS:.o=.d)
+-include $(CMMODULE_FOO_SO_OBJS:.o=.d)
 
-$(CMMODULE_EXAMPLE_SO_OBJS): %.o: %.c
+$(CMMODULE_FOO_SO_OBJS): %.o: %.c
 	$(CC) -c -o $@ $< -MD -fPIC $(CFLAGS)
 
 clean:
@@ -49,6 +49,6 @@ clean:
 	rm -f $(CMREF_BIN)
 	rm -f $(CMLOG_BIN)
 	rm -f $(CMMODULE_BIN)
-	rm -f $(CMMODULE_EXAMPLE_SO_OBJS)
-	rm -f $(CMMODULE_EXAMPLE_SO)
+	rm -f $(CMMODULE_FOO_SO_OBJS)
+	rm -f $(CMMODULE_FOO_SO)
 	rm -f ./*.d
