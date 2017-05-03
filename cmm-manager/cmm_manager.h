@@ -18,7 +18,7 @@ void cmm_manager_destroy(struct cmm_manager *self);
 /*
  * Return /CM_MANAGER
  */
-const char * cmm_manager_get_path(struct cmm_manager *self);
+char * cmm_manager_get_path(struct cmm_manager *self);
 
 void cmm_manager_start(struct cmm_manager *self,
 		      cm_err_t *err);
@@ -48,6 +48,7 @@ void cmm_manager_subscribe_modem_added(struct cmm_manager *self,
 				      cmm_manager_modem_added added,
 				      void *userdata,
 				      cm_err_t *err);
+
 void cmm_manager_unsubscribe_modem_added(struct cmm_manager *self,
 					cm_err_t *err);
 
@@ -55,7 +56,8 @@ void cmm_manager_subscribe_modem_removed(struct cmm_manager *self,
 					cmm_manager_modem_removed removed,
 					void *userdata,
 					cm_err_t *err);
+
 void cmm_manager_unsubscribe_modem_removed(struct cmm_manager *self,
 					  cm_err_t *err);
 
-#endif /* _CM_MANAGER_ */
+#endif /* _CMM_MANAGER_H_ */

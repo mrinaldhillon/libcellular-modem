@@ -8,11 +8,11 @@
 
 struct cmm_manager_priv;
 
-
 struct cmm_manager {
 	struct cm_object cmobj;
-	struct cm_manager_priv *priv;
+	struct cmm_manager_priv *priv;
 
+	/* needed before final unref */
 	void (*cleanup)(struct cmm_manager *self);
 
 	void (*start)(struct cmm_manager *self, cm_err_t *err);
@@ -59,9 +59,11 @@ static inline struct cmm_manager * to_cmm_manager(struct cm_object *cmobj)
 	return cmobj ? cm_container_of(cmobj, struct cmm_manager, cmobj) : NULL;
 }
 
+struct cmm_manager * cmm_manager_obj_new(cm_err_t *err);
+
 #if !defined(_CMM_MANAGER_H_)
 
-struct cmm_manager * cmm_manager_new(cm_err_t *err);
+#define cmm_manager_new		cmm_manager_obj_new
 
 #endif /* !defined(_CMM_MANAGER_H_) */
 
