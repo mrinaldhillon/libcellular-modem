@@ -13,6 +13,7 @@ struct cmm_manager * cmm_manager_ref(struct cmm_manager *self)
 {
 	assert(self);
 	cm_object_get(&self->cmobj);
+	return self;
 }
 
 void cmm_manager_unref(struct cmm_manager *self)

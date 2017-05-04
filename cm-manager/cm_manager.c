@@ -6,13 +6,14 @@
 
 struct cm_manager * cm_manager_new(cm_err_t *err)
 {
-	return cm_manager_obj_new(err);
+	return cm_manager_obj_new(NULL, err);
 }
 
 struct cm_manager * cm_manager_ref(struct cm_manager *self)
 {
 	assert(self);
 	cm_object_get(&self->cmobj);
+	return self;
 }
 
 void cm_manager_unref(struct cm_manager *self)

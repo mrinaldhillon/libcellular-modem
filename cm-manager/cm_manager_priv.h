@@ -1,9 +1,19 @@
-#ifndef _CM_MANAGER_PRIV_
-#define _CM_MANAGER_PRIV_
+#ifndef _CM_MANAGER_PRIV_H_
+#define _CM_MANAGER_PRIV_H_
+
+#include "cm_atomic.h"
+#include "cm_object.h"
+#include "cm_module.h"
 
 struct cm_manager_priv {
+	/* owner is passed when creating cm_manager after
+	 * dynamically loading the library i.e. dlopen
+	 * cm_manager will take refernce of cm_module
+	 * and release it when it gets finalized.
+	 */
+	struct cm_module *owner;
 	struct cm_set *modems;
 	cm_atomic_t num_modems;
 };
 
-#endif /* _CMM_MANAGER_PRIV_ */
+#endif /* _CM_MANAGER_PRIV_H_ */

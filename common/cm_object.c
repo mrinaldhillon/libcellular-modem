@@ -296,6 +296,8 @@ struct cm_object * cm_set_get_next(struct cm_set *self,
 				   struct cm_object *cur_entry)
 {
 	assert(self);
+	if (!cur_entry)
+		return NULL;
 	struct cm_object *next_entry = NULL;
 	pthread_mutex_lock(&self->lock);
 	next_entry = cm_list_next(&self->list, cur_entry, entry);

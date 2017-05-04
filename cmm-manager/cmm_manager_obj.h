@@ -1,5 +1,5 @@
-#ifndef _CM_MANAGER_OBJ_H_
-#define _CM_MANAGER_OBJ_H_
+#ifndef _CMM_MANAGER_OBJ_H_
+#define _CMM_MANAGER_OBJ_H_
 
 #include "cm_atomic.h"
 #include "cm_object.h"
@@ -60,12 +60,11 @@ static inline struct cmm_manager * to_cmm_manager(struct cm_object *cmobj)
 }
 
 struct cmm_manager * cmm_manager_obj_new(cm_err_t *err);
-
+#if 0
 #if !defined(_CMM_MANAGER_H_)
 
 #define cmm_manager_new		cmm_manager_obj_new
-
 #endif /* !defined(_CMM_MANAGER_H_) */
-
+#endif
 
 #endif /* _CMM_MANAGER_OBJ_H_ */

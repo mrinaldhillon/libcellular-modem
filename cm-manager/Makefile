@@ -7,6 +7,7 @@ CMMODEM_DIR=$(TLR_BASE)/cm-modem
 INCLUDES=$(COMMON_DIR)/cm_err.h \
 	$(COMMON_DIR)/cm_log.h \
 	./cm_manager.h \
+	./cm_manager_obj.h \
 	./cm_manager_clbk_defs.h \
 	$(CMMODEM_DIR)/cm_modem.h \
 	$(CMMODEM_DIR)/cm_modem_state.h \
@@ -43,7 +44,7 @@ COMMON_LIBS=$(COMMON_DIR)/cm_atomic.o \
 
 LIBOBJS=./cm_manager.o ./cm_manager_obj.o
 LIBRARY=libcm-manager.so
-CFLAGS=
+
 ifeq ($(DEBUG),true)
 CFLAGS += -g -DCM_DEBUG
 endif
@@ -57,7 +58,7 @@ all: $(LIBRARY)
 
 $(LIBRARY): $(LIBOBJS) $(COMMON_LIBS)
 	echo "install root $(INSTALL_ROOT)"
-	$(CC) -Wl,-soname,$(LIBRARY) -shared $^ -o $@ $(LDFLAGS)
+	$(CC) -Wl,-soname,$(LIBRARY) -shared $^ -o $@ $(LDFLAGS) $(CFLAGS)
 
 -include $(LIBOBJS:.o=.d)
 
@@ -65,9 +66,9 @@ $(LIBOBJS): %.o: %.c
 	$(CC) -c -o $@ $< -MD $(CFLAGS)
 
 install: $(LIBRARY)
-	-mkdir -p $(INSTALL_ROOT)/usr/lib
+	-mkdir -p $(INSTALL_ROOT)/usr/lib/cmm-manager
 	-mkdir -p $(INSTALL_ROOT)/usr/include
-	install -m 0755 $^ $(INSTALL_ROOT)/usr/lib
+	install -m 0755 $^ $(INSTALL_ROOT)/usr/lib/cmm-manager
 	install -m 0644 $(INCLUDES) $(INSTALL_ROOT)/usr/include
 #	cp -r $(CCAN_DIR)/ccan $(INSTALL_ROOT)/usr/include
 

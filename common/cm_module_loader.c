@@ -13,7 +13,7 @@
 #include "cm_module.h"
 #include "cm_module_loader.h"
 
-#define CM_MODULE_CREATE_SYM	"get_module_entry_symbol"
+#define CM_MODULE_CREATE_SYM	"cm_get_module_entry_symbol"
 
 typedef const char * (*get_module_entry_symbol)(void);
 
@@ -152,7 +152,7 @@ struct cm_module * cm_module_loader_load_path(const char *filepath,
 
 	//@todo:check if sopath exists
 	cm_debug("Loading module: %s", filepath);
-	if (0 == load_in_new_namespace)
+	if (1 == load_in_new_namespace)
 		module_handle = dlmopen(LM_ID_NEWLM, filepath, RTLD_NOW);
 	else
 		module_handle = dlopen(filepath, RTLD_NOW);
