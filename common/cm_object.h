@@ -85,22 +85,17 @@ static inline struct cm_set * to_cm_set(struct cm_object *cmobj)
 	return cmobj ? cm_container_of(cmobj, struct cm_set, cmobj) : NULL;
 }
 
-//void cm_set_init(struct cm_set *cmset);
+struct cm_set * cm_set_create(void);
 
-/*int cm_set_register(struct cm_set *cmset);
-
-void cm_set_unregister(struct cm_set *cmset);
-*/
-//void cm_set_set_name(struct cm_set *cmset, const char *name);
-
-struct cm_set * cm_set_create(const char *name);
-
+/* These is just convinience api for better readability since cm_set inherits
+ * these features from cm_object */
 void cm_set_add(struct cm_set *self, struct cm_object *parent,
-		   struct cm_set *cmset, cm_err_t *err);
+		   struct cm_set *cmset, cm_err_t *err,
+		   const char *name_fmt, ...);
 
 struct cm_set * cm_set_create_and_add(struct cm_object *parent,
-				      struct cm_set *cmset, const char *name,
-				      cm_err_t *err);
+				      struct cm_set *cmset, cm_err_t *err,
+				      const char *name_fmt, ...);
 
 void cm_set_del(struct cm_set *self);
 

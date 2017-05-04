@@ -116,6 +116,12 @@ static void cm_manager_obj_release_for_each_modem(struct cm_object *modemobj,
 {
 	assert(modemobj);
 	struct cm_manager *self = (struct cm_manager *)userdata;
+	/* Deleting the modem from internal linked list
+	 * since 'put' may not release it from the list
+	 * if client may have held reference to this modem.
+	 * Upon releasing last reference, will this modem
+	 * be removed from memory, though by deleting from set cm-manager
+	 * has stopped managing this modem. */
 	cm_object_del(modemobj);
 	cm_object_put(modemobj);
 	cm_atomic_dec(&self->priv->num_modems);
@@ -149,7 +155,6 @@ static void cm_manager_obj_release(struct cm_object *cmobj)
 	 * @todo figure alternate solution
 	 */
 	sem_post(&mutex);
-
 }
 
 struct cm_manager * cm_manager_obj_new(struct cm_module *owner,
@@ -171,12 +176,11 @@ struct cm_manager * cm_manager_obj_new(struct cm_module *owner,
 	}
 
 	cm_object_init(&self->cmobj);
-//	cm_object_set_name(&self->cmobj, "CMManager");
 	self->cmobj.release = &cm_manager_obj_release;
-
-	priv->modems = cm_set_create("CMModems");
+	/* @todo: modems should be created in start */
+	priv->modems = cm_set_create_and_add(&self->cmobj, NULL,
+					     err, "CMModems");
 	cm_atomic_set(&priv->num_modems, 0);
-	cm_set_add(priv->modems, &self->cmobj, NULL, err);
 	if (owner)
 		cm_object_get(&owner->cmobj);
 	priv->owner = owner;

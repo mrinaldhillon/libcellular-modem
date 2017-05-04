@@ -237,9 +237,9 @@ struct cmm_manager * cmm_manager_obj_new(cm_err_t *err)
 	cm_object_set_name(&self->cmobj, "CMMManager");
 	self->cmobj.release = &cmm_manager_obj_release;
 
-	priv->cmmset = cm_set_create("CMManagers");
+	priv->cmmset = cm_set_create_and_add(&self->cmobj, NULL, err,
+					     "CMManagers");
 	cm_atomic_set(&priv->num_cmm, 0);
-	cm_set_add(priv->cmmset, &self->cmobj, NULL, err);
 	self->priv = priv;
 
 	self->cleanup = &cmm_manager_obj_cleanup;
