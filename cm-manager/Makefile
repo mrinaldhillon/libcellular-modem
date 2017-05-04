@@ -6,8 +6,8 @@ CMMODEM_DIR=$(TLR_BASE)/cm-modem
 
 INCLUDES=$(COMMON_DIR)/cm_err.h \
 	$(COMMON_DIR)/cm_log.h \
-	./cmm_manager.h \
-	./cmm_manager_clbk_defs.h \
+	./cm_manager.h \
+	./cm_manager_clbk_defs.h \
 	$(CMMODEM_DIR)/cm_modem.h \
 	$(CMMODEM_DIR)/cm_modem_state.h \
 	$(CMMODEM_DIR)/cm_bearer.h \
@@ -41,8 +41,8 @@ COMMON_LIBS=$(COMMON_DIR)/cm_atomic.o \
 	    $(COMMON_DIR)/cm_module.o \
 	    $(COMMON_DIR)/cm_module_loader.o
 
-LIBOBJS=./cmm_manager.o ./cmm_manager_obj.o
-LIBRARY=libcmm-manager.so
+LIBOBJS=./cm_manager.o ./cm_manager_obj.o
+LIBRARY=libcm-manager.so
 CFLAGS=
 ifeq ($(DEBUG),true)
 CFLAGS += -g -DCM_DEBUG
@@ -55,7 +55,7 @@ LDFLAGS= -lpthread -ldl
 
 all: $(LIBRARY)
 
-$(LIBRARY): $(COMMON_LIBS) $(LIBOBJS)
+$(LIBRARY): $(LIBOBJS) $(COMMON_LIBS)
 	echo "install root $(INSTALL_ROOT)"
 	$(CC) -Wl,-soname,$(LIBRARY) -shared $^ -o $@ $(LDFLAGS)
 

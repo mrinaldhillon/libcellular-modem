@@ -3,10 +3,10 @@ include $(TLR_BASE)/build/rds00008.mk
 CM_MANAGER_BIN=cm_manager
 
 ifeq ($(DEBUG),true)
-CFLAGS += -g
+CFLAGS += -g -DCM_DEBUG
 endif
 
-CFLAGS += -I$(INSTALL_ROOT)/usr/include -DCM_DEBUG 
+CFLAGS += -I$(INSTALL_ROOT)/usr/include 
 
 .PHONY: all clean
 

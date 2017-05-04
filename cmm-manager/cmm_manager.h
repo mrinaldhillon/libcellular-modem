@@ -2,7 +2,6 @@
 #define _CMM_MANAGER_H_
 
 #include "cm_err.h"
-#include "cm_modem.h"
 #include "cmm_manager_clbk_defs.h"
 
 struct cmm_manager;
