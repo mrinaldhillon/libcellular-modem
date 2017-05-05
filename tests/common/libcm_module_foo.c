@@ -25,7 +25,7 @@ void cm_module_foo_init(struct cm_module *owner)
 		cm_debug("Owner Module:%s", cm_object_get_name(&owner->cmobj));
 }
 
-const char * get_module_entry_symbol(void)
+const char * cm_get_module_entry_symbol(void)
 {
 	return "cm_module_foo_init";
 }

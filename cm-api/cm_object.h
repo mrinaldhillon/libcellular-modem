@@ -9,7 +9,6 @@
 
 #define CM_OBJECT_MAX_NAME_LEN	1024
 
-
 struct cm_object {
 	char name[1024];
 	// Node is added to cm_set if cm_set exists

@@ -1,8 +1,11 @@
 include $(TLR_BASE)/build/rds00008.mk
 
-CMM_MANAGER_BIN=cmm_manager
-INCLUDE=-I$(INSTALL_ROOT)/usr/include 
+CMAPI_INCDIR=$(TLR_BASE)/cm-api
+CMMMANAGER_INCDIR=$(CMAPI_INCDIR)
 
+CMMMANAGER_LIBDIR=$(TLR_BASE)/cmm-manager
+
+INCLUDE=-I$(CMMMANAGER_INCDIR)
 
 ifeq ($(DEBUG),true)
 CFLAGS += -g -DCM_DEBUG
@@ -10,10 +13,12 @@ endif
 
 .PHONY: all clean
 
-all: $(CMM_MANAGER_BIN) 
+CMM_MANAGER_TESTBIN=cmm_manager
 
-$(CMM_MANAGER_BIN):
-	$(CC) $(CMM_MANAGER_BIN).c -o $@ $(INCLUDE) $(CFLAGS) -L $(INSTALL_ROOT)/usr/lib/ -lcmm-manager
+all: $(CMM_MANAGER_TESTBIN) 
+
+$(CMM_MANAGER_TESTBIN):
+	$(CC) $(CMM_MANAGER_TESTBIN).c -o $@ $(CFLAGS) $(INCLUDE) -L $(CMMMANAGER_LIBDIR) -lcmm-manager 
 
 clean:
-	rm -f $(CMM_MANAGER_BIN) ./*.d
+	rm -f $(CMM_MANAGER_TESTBIN) ./*.d

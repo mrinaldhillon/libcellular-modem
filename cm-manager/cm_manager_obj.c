@@ -180,6 +180,11 @@ struct cm_manager * cm_manager_obj_new(struct cm_module *owner,
 	/* @todo: modems should be created in start */
 	priv->modems = cm_set_create_and_add(&self->cmobj, NULL,
 					     err, "CMModems");
+	if (CM_ERR_NONE != *err) {
+		cm_error("Error in creating CMModems cmset %d", *err);
+		goto out_unref;
+	}
+
 	cm_atomic_set(&priv->num_modems, 0);
 	if (owner)
 		cm_object_get(&owner->cmobj);
@@ -203,6 +208,10 @@ struct cm_manager * cm_manager_obj_new(struct cm_module *owner,
 	}
 
 	return self;
+out_unref:
+	cm_manager_obj_cleanup(self);
+	cm_object_put(&self->cmobj);
+	return NULL;
 }
 
 /* Dynamic library loading is done in two steps

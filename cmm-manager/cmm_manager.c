@@ -29,7 +29,7 @@ void cmm_manager_destroy(struct cmm_manager *self)
 	cm_object_put(&self->cmobj);
 }
 
-char * cm_manager_get_path(struct cmm_manager *self)
+char * cmm_manager_get_path(struct cmm_manager *self)
 {
 	assert(self);
 	return cm_object_get_path(&self->cmobj);

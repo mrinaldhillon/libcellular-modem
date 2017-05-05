@@ -1,41 +1,24 @@
 include $(TLR_BASE)/build/rds00008.mk
 
 CCAN_DIR=$(TLR_BASE)/lib/ccan
-COMMON_DIR=$(TLR_BASE)/common
+COMMON_LIBDIR=$(TLR_BASE)/common
+CMAPI_INCDIR=$(TLR_BASE)/cm-api
 
-INCLUDES=$(COMMON_DIR)/cm_err.h \
-	$(COMMON_DIR)/cm_log.h \
-	./cm_modem.h \
-	./cm_modem_state.h \
-	./cm_bearer.h \
-	./cm_bearer_properties.h \
-	./cm_bearer_ip_config.h \
-	./cm_bearer_stats.h \
-	./cm_bearer_state.h \
-	./cm_ip_type.h \
-	./cm_signal.h \
-	./cm_signal_type.h \
-	./cm_sim.h \
-	./cm_messaging.h
-	
-
-#	$(COMMON_DIR)/cm_list.h \
-	$(COMMON_DIR)/cm_container_of.h \
+#	$(COMMON_LIBDIR)/cm_list.h \
+	$(COMMON_LIBDIR)/cm_container_of.h \
 	$(CCAN_DIR)/ccan/list/list.h\
 	$(CCAN_DIR)/ccan/container_of/container_of.h\
 	$(CCAN_DIR)/ccan/check_type/check_type.h\
 	$(CCAN_DIR)/ccan/str/str.h
 
-INCLUDE=-I. -I$(COMMON_DIR) \
+INCLUDE=-I$(CMAPI_INCDIR) \
 	-I $(CCAN_DIR)/ccan/list \
 	-I $(CCAN_DIR)/ccan/container_of \
 	-I $(CCAN_DIR)
 
-COMMON_LIBS=$(COMMON_DIR)/cm_atomic.o \
-	    $(COMMON_DIR)/cm_ref.o \
-	    $(COMMON_DIR)/cm_object.o
-
-LIBOBJS = 
+COMMON_LIBS=$(COMMON_LIBDIR)/cm_atomic.o \
+	    $(COMMON_LIBDIR)/cm_ref.o \
+	    $(COMMON_LIBDIR)/cm_object.o
 
 ifeq ($(DEBUG),true)
 CFLAGS += -g

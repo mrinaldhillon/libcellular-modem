@@ -5,14 +5,16 @@ CMREF_BIN=cm_ref
 CMLOG_BIN=cm_log
 CMMODULE_BIN=cm_module_loader
 
-INCLUDE=-I$(TLR_BASE)/common -I$(TLR_BASE)/lib/ccan
+CMAPI_INCDIR=$(TLR_BASE)/cm-api
 
-COMMON_LIBS=$(TLR_BASE)/common
-CMATOMIC_OBJS=$(COMMON_LIBS)/cm_atomic.o
-CMREF_OBJS=$(CMATOMIC_OBJS) $(COMMON_LIBS)/cm_ref.o
-CMOBJECT_OBJS=$(CMREF_OBJS) $(COMMON_LIBS)/cm_object.o
-CMMODULE_OBJS=$(CMOBJECT_OBJS) $(COMMON_LIBS)/cm_module.o \
-	      $(COMMON_LIBS)/cm_module_loader.o
+INCLUDE=-I$(CMAPI_INCDIR) -I$(TLR_BASE)/lib/ccan
+
+COMMON_LIBDIR=$(TLR_BASE)/common
+CMATOMIC_OBJS=$(COMMON_LIBDIR)/cm_atomic.o
+CMREF_OBJS=$(CMATOMIC_OBJS) $(COMMON_LIBDIR)/cm_ref.o
+CMOBJECT_OBJS=$(CMREF_OBJS) $(COMMON_LIBDIR)/cm_object.o
+CMMODULE_OBJS=$(CMOBJECT_OBJS) $(COMMON_LIBDIR)/cm_module.o \
+	      $(COMMON_LIBDIR)/cm_module_loader.o
 
 CMMODULE_FOO_SO=libcm-module-foo.so
 CMMODULE_FOO_SO_OBJS=libcm_module_foo.o

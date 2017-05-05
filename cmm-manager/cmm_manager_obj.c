@@ -16,10 +16,10 @@
 #include "cm_manager_obj.h"
 
 #if !defined(CMM_MANAGER_LIBDIR)
-#define CMM_MANAGER_LIBDIR		"install/usr/lib/cmm-manager"
+#define CMM_MANAGER_LIBDIR		"/usr/lib/cmm-manager"
 #endif /* !defined CMM_MANAGER_LIBDIR */
-/* @tbd: Should CMMManeger be singleton */
 
+/* @tbd: Should CMMManeger be singleton */
 
 void cmm_manager_obj_start(struct cmm_manager *self, cm_err_t *err)
 {
@@ -239,6 +239,11 @@ struct cmm_manager * cmm_manager_obj_new(cm_err_t *err)
 
 	priv->cmmset = cm_set_create_and_add(&self->cmobj, NULL, err,
 					     "CMManagers");
+	if (CM_ERR_NONE != *err) {
+		cm_error("Error in creating CMManagers set %d", *err);
+		goto out_unref;
+	}
+
 	cm_atomic_set(&priv->num_cmm, 0);
 	self->priv = priv;
 

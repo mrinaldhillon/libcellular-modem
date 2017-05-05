@@ -59,6 +59,7 @@ void cm_module_loader_load_from_dirpath(const char *dirpath,
 	int num_loaded = 0;
 	struct cm_module *module = NULL;
 	char *filepath = NULL;
+	char *dot = NULL;
 
 	assert(NULL != dirpath && (0 != strlen(dirpath)) && NULL != err);
 	dirp = opendir(dirpath);
@@ -72,6 +73,12 @@ void cm_module_loader_load_from_dirpath(const char *dirpath,
 		if (0 == strcmp(dirent->d_name, ".") ||
 		    0 == strcmp(dirent->d_name, ".."))
 			continue;
+		if (NULL == (dot = strrchr(dirent->d_name, '.')))
+		    continue;
+		if (0 != strcmp(dot, ".so"))
+		    continue;
+		dot = NULL;
+
 		filepath = cm_module_loader_build_filepath(dirpath,
 							   dirent->d_name,
 							   err);

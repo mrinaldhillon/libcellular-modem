@@ -1,7 +1,4 @@
--I cmm-manager
--I cm-manager
--I cm-modem
--I common
+-I cm-api
 -I lib/ccan
 -Wall
 -Werror

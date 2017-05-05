@@ -1,27 +1,11 @@
 include $(TLR_BASE)/build/rds00008.mk
 
 CCAN_DIR=$(TLR_BASE)/lib/ccan
-COMMON_DIR=$(TLR_BASE)/common
-CMMODEM_DIR=$(TLR_BASE)/cm-modem
+COMMON_LIBDIR=$(TLR_BASE)/common
+CMMANAGER_LIBDIR=.
 
-INCLUDES=$(COMMON_DIR)/cm_err.h \
-	$(COMMON_DIR)/cm_log.h \
-	./cm_manager.h \
-	./cm_manager_obj.h \
-	./cm_manager_clbk_defs.h \
-	$(CMMODEM_DIR)/cm_modem.h \
-	$(CMMODEM_DIR)/cm_modem_state.h \
-	$(CMMODEM_DIR)/cm_bearer.h \
-	$(CMMODEM_DIR)/cm_bearer_properties.h \
-	$(CMMODEM_DIR)/cm_bearer_ip_config.h \
-	$(CMMODEM_DIR)/cm_bearer_stats.h \
-	$(CMMODEM_DIR)/cm_bearer_state.h \
-	$(CMMODEM_DIR)/cm_ip_type.h \
-	$(CMMODEM_DIR)/cm_signal.h \
-	$(CMMODEM_DIR)/cm_signal_type.h \
-	$(CMMODEM_DIR)/cm_sim.h \
-	$(CMMODEM_DIR)/cm_messaging.h
-	
+CMAPI_INCDIR=$(TLR_BASE)/cm-api
+INSTALL_LIBDIR=$(INSTALL_ROOT)/usr/lib/cmm-manager
 
 #	$(COMMON_DIR)/cm_list.h \
 	$(COMMON_DIR)/cm_container_of.h \
@@ -30,23 +14,24 @@ INCLUDES=$(COMMON_DIR)/cm_err.h \
 	$(CCAN_DIR)/ccan/check_type/check_type.h\
 	$(CCAN_DIR)/ccan/str/str.h
 
-INCLUDE=-I. -I$(COMMON_DIR) \
-	-I$(TLR_BASE)/cm-modem \
+INCLUDE=-I$(CMAPI_INCDIR) \
 	-I$(CCAN_DIR)/ccan/list \
 	-I$(CCAN_DIR)/ccan/container_of \
 	-I$(CCAN_DIR)
 
-COMMON_LIBS=$(COMMON_DIR)/cm_atomic.o \
-	    $(COMMON_DIR)/cm_ref.o \
-	    $(COMMON_DIR)/cm_object.o \
-	    $(COMMON_DIR)/cm_module.o \
-	    $(COMMON_DIR)/cm_module_loader.o
+COMMON_LIBS=$(COMMON_LIBDIR)/cm_atomic.o \
+	    $(COMMON_LIBDIR)/cm_ref.o \
+	    $(COMMON_LIBDIR)/cm_object.o \
+	    $(COMMON_LIBDIR)/cm_module.o \
+	    $(COMMON_LIBDIR)/cm_module_loader.o
 
-LIBOBJS=./cm_manager.o ./cm_manager_obj.o
-LIBRARY=libcm-manager.so
+CMMANAGER_LIBS=$(CMMANAGER_LIBDIR)/cm_manager.o \
+		$(CMMANAGER_LIBDIR)/cm_manager_obj.o
+
+LIB_CMMANAGER=libcm-manager.so
 
 ifeq ($(DEBUG),true)
-CFLAGS += -g -DCM_DEBUG
+	CFLAGS += -g -DCM_DEBUG
 endif
 
 CFLAGS += -fPIC $(INCLUDE)
@@ -54,24 +39,20 @@ LDFLAGS= -lpthread -ldl
 
 .PHONY: all clean install
 
-all: $(LIBRARY)
+all: $(LIB_CMMANAGER)
 
-$(LIBRARY): $(LIBOBJS) $(COMMON_LIBS)
-	echo "install root $(INSTALL_ROOT)"
-	$(CC) -Wl,-soname,$(LIBRARY) -shared $^ -o $@ $(LDFLAGS) $(CFLAGS)
+$(LIB_CMMANAGER): $(COMMON_LIBS) $(CMMANAGER_LIBS)
+	$(CC) -Wl,-soname,$(LIB_CMMANAGER) -shared $^ -o $@ $(LDFLAGS) $(CFLAGS)
 
--include $(LIBOBJS:.o=.d)
+-include $(CMMANAGER_LIBS:.o=.d)
 
-$(LIBOBJS): %.o: %.c
+$(CMMANAGER_LIBS): %.o: %.c
 	$(CC) -c -o $@ $< -MD $(CFLAGS)
 
-install: $(LIBRARY)
-	-mkdir -p $(INSTALL_ROOT)/usr/lib/cmm-manager
-	-mkdir -p $(INSTALL_ROOT)/usr/include
-	install -m 0755 $^ $(INSTALL_ROOT)/usr/lib/cmm-manager
-	install -m 0644 $(INCLUDES) $(INSTALL_ROOT)/usr/include
-#	cp -r $(CCAN_DIR)/ccan $(INSTALL_ROOT)/usr/include
-
+install: $(LIB_CMMANAGER)
+	echo "install at $(INSTALL_LIBDIR)"
+	-mkdir -p $(INSTALL_LIBDIR)
+	install -m 0755 $^ $(INSTALL_LIBDIR)
 
 clean:
-	rm -f $(LIBRARY) $(LIBOBJS) ./*.d
+	rm -f $(LIB_CMMANAGER) $(CMMANAGER_LIBS) $(LIB_CMMANAGER)/*.d

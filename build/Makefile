@@ -5,7 +5,6 @@ export TLR_BASE
 include $(TLR_BASE)/build/makefile.globals
 
 TARGETS += ../common ../cm-manager ../cmm-manager ../tests
-#../modules
 
 TARGETS_CLEAN = $(addsuffix .clean,$(TARGETS) $(CLEAN_TARGETS))
 TARGETS_INSTALL = $(addsuffix .install,$(TARGETS) )
@@ -17,17 +16,14 @@ export INSTALL_ROOT
 all: $(TARGETS)
 
 .PHONY: $(TARGETS)
-
 ../common:
 	$(MAKE) -C $@ all
 ../cm-manager:
-	$(MAKE) -C $@ all install
+	$(MAKE) -C $@ all
 ../cmm-manager:
-	$(MAKE) -C $@ all install
+	$(MAKE) -C $@ all
 ../tests:
 	$(MAKE) -C $@ all
-#../modules:
-#	$(MAKE) -C $@ all install
 
 .PHONY: clean
 clean: $(TARGETS_CLEAN)
@@ -42,3 +38,5 @@ install: $(TARGETS_INSTALL)
 .PHONY: $(TARGETS_INSTALL)
 $(TARGETS_INSTALL):
 	$(MAKE) -C $(basename $@) install
+	mkdir -p $(INSTALL_ROOT)/usr/include
+	cp -r $(TLR_BASE)/cm-api $(INSTALL_ROOT)/usr/include/libcm-api
