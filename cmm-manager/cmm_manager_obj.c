@@ -270,3 +270,65 @@ out_unref:
 	cm_object_put(&self->cmobj);
 	return NULL;
 }
+
+#if 0
+struct cm_manager_list_for_each_ctx {
+	struct cm_manager *self;
+	cm_manager_list_modems_for_each for_each;
+	void *userdata;
+};
+
+
+void cm_manager_list_modems_for_each_wrapper(struct cm_manager_iface *iface,
+					     struct cm_modem *modem,
+					     void *userdata)
+{
+	struct cm_manager *self = NULL;
+	struct cm_manager_list_for_each_ctx *ctx = NULL;
+	assert(NULL != iface &&
+	       NULL != modem &&
+	       NULL != userdata);
+
+	ctx = (struct cm_manager_list_for_each_ctx *)userdata;
+	assert(NULL != ctx &&
+	       NULL != ctx->self &&
+	       NULL != ctx->for_each);
+
+	self = ctx->self;
+	ctx->for_each(self, modem, userdata);
+}
+
+void cm_manager_list_modems(struct cm_manager *self,
+			    cm_manager_list_modems_for_each for_each,
+			    void *userdata,
+			    cm_err_t *err)
+{
+	assert(NULL != self &&
+	       NULL != for_each &&
+	       NULL != err &&
+	       1 != cm_list_empty(&self->ifaces));
+
+	struct cm_manager_iface *iface = NULL, *next = NULL;
+	struct cm_manager_list_for_each_ctx ctx;
+
+	memset(&ctx, 0, sizeof(ctx));
+	ctx.self = self;
+	ctx.for_each = for_each;
+	ctx.userdata = userdata;
+
+	cm_list_for_each_safe(&self->ifaces, iface, next, iface_node) {
+		//@todo create joinable pthreads for concurrent stop
+		//@tbd err for each may have to different
+		iface->ref(iface)->
+			list_modems(iface,
+				    &cm_manager_list_modems_for_each_wrapper,
+				    &ctx, err);
+		if (CM_ERR_NONE != *err) {
+			cm_warn("Error in listing modems from interface name %s err: %d",
+				iface->get_name(iface), *err);
+		}
+		iface->unref(iface);
+	}
+}
+#endif
+
