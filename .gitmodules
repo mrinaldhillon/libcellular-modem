@@ -1,0 +1,3 @@
+[submodule "lib/ModemManager"]
+	path = lib/ModemManager
+	url = https://anongit.freedesktop.org/git/ModemManager/ModemManager.git
