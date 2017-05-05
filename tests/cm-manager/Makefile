@@ -1,20 +1,24 @@
 include $(TLR_BASE)/build/rds00008.mk
 
-CM_MANAGER_BIN=cm_manager
+CMAPI_INCDIR=$(TLR_BASE)/cm-api
+CMMANAGER_INCDIR=$(CMAPI_INCDIR)
+
+CMMANAGER_LIBDIR=$(TLR_BASE)/cm-manager
+
+INCLUDE=-I$(CMMANAGER_INCDIR)
 
 ifeq ($(DEBUG),true)
-CFLAGS += -g
+CFLAGS += -g -DCM_DEBUG
 endif
-
-CFLAGS += -I$(INSTALL_ROOT)/usr/include -DCM_DEBUG 
 
 .PHONY: all clean
 
-all: $(CM_MANAGER_BIN) 
+CM_MANAGER_TESTBIN=cm_manager
 
-$(CM_MANAGER_BIN):
-	$(CC) $(CM_MANAGER_BIN).c -o $@ $^ $(CFLAGS) \
-		-L $(INSTALL_ROOT)/usr/lib/ -lcm-manager -rdynamic
+all: $(CM_MANAGER_TESTBIN) 
+
+$(CM_MANAGER_TESTBIN):
+	$(CC) $(CM_MANAGER_TESTBIN).c -o $@ $(CFLAGS) $(INCLUDE) -L $(CMMANAGER_LIBDIR) -lcm-manager 
 
 clean:
-	rm -f $(CM_MANAGER_BIN) ./*.d
+	rm -f $(CM_MANAGER_TESTBIN) ./*.d

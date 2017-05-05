@@ -2,10 +2,10 @@ include $(TLR_BASE)/build/rds00008.mk
 
 CCAN_DIR=$(TLR_BASE)/lib/ccan
 COMMON_LIBDIR=$(TLR_BASE)/common
-CMMANAGER_LIBDIR=.
+CMMMANAGER_LIBDIR=.
 
 CMAPI_INCDIR=$(TLR_BASE)/cm-api
-INSTALL_LIBDIR=$(INSTALL_ROOT)/usr/lib/cmm-manager
+INSTALL_LIBDIR=$(INSTALL_ROOT)/usr/lib
 
 #	$(COMMON_DIR)/cm_list.h \
 	$(COMMON_DIR)/cm_container_of.h \
@@ -25,34 +25,34 @@ COMMON_LIBS=$(COMMON_LIBDIR)/cm_atomic.o \
 	    $(COMMON_LIBDIR)/cm_module.o \
 	    $(COMMON_LIBDIR)/cm_module_loader.o
 
-CMMANAGER_LIBS=$(CMMANAGER_LIBDIR)/cm_manager.o \
-		$(CMMANAGER_LIBDIR)/cm_manager_obj.o
+CMMMANAGER_LIBS=$(CMMMANAGER_LIBDIR)/cmm_manager.o \
+		$(CMMMANAGER_LIBDIR)/cmm_manager_obj.o
 
-LIB_CMMANAGER=libcm-manager.so
+LIB_CMMMANAGER=libcmm-manager.so
 
 ifeq ($(DEBUG),true)
 	CFLAGS += -g -DCM_DEBUG
 endif
 
-CFLAGS += -fPIC $(INCLUDE)
+CFLAGS += -fPIC $(INCLUDE) 
 LDFLAGS= -lpthread -ldl
 
 .PHONY: all clean install
 
-all: $(LIB_CMMANAGER)
+all: $(LIB_CMMMANAGER)
 
-$(LIB_CMMANAGER): $(COMMON_LIBS) $(CMMANAGER_LIBS)
-	$(CC) -Wl,-soname,$(LIB_CMMANAGER) -shared $^ -o $@ $(LDFLAGS) $(CFLAGS)
+$(LIB_CMMMANAGER): $(COMMON_LIBS) $(CMMMANAGER_LIBS)
+	$(CC) -Wl,-soname,$(LIB_CMMMANAGER) -shared $^ -o $@ $(LDFLAGS) $(CFLAGS) 
 
--include $(CMMANAGER_LIBS:.o=.d)
+-include $(CMMMANAGER_LIBS:.o=.d)
 
-$(CMMANAGER_LIBS): %.o: %.c
-	$(CC) -c -o $@ $< -MD $(CFLAGS)
+$(CMMMANAGER_LIBS): %.o: %.c
+	$(CC) -c -o $@ $< -MD $(CFLAGS) -DCMM_MANAGER_LIBDIR=\"$(INSTALL_LIBDIR)/cmm-manager\"
 
-install: $(LIB_CMMANAGER)
+install: $(LIB_CMMMANAGER)
 	echo "install at $(INSTALL_LIBDIR)"
 	-mkdir -p $(INSTALL_LIBDIR)
 	install -m 0755 $^ $(INSTALL_LIBDIR)
 
 clean:
-	rm -f $(LIB_CMMANAGER) $(CMMANAGER_LIBS) $(LIB_CMMANAGER)/*.d
+	rm -f $(LIB_CMMMANAGER) $(CMMMANAGER_LIBS) $(LIB_CMMMANAGER)/*.d

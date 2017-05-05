@@ -150,7 +150,7 @@ void cm_atomic_dec(cm_atomic_t *v)
 
 int cm_atomic_dec_and_test(cm_atomic_t *v)
 {
-	int is_zero;
+	int is_zero = 0;
 
 	assert(NULL != v);
 	pthread_mutex_lock(&cm_atomic_lock);

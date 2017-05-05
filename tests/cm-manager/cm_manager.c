@@ -1,6 +1,5 @@
 #include <stdio.h>
-#include "cm_err.h"
-#include "cm_manager.h"
+#include "libcm-manager.h"
 
 int main()
 {

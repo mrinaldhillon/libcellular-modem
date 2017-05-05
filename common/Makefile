@@ -1,24 +1,29 @@
 include $(TLR_BASE)/build/rds00008.mk
 
-CCAN_DIR=$(TLR_BASE)/lib/ccan/
+CCAN_DIR=$(TLR_BASE)/lib/ccan
+CMAPI_INCDIR=$(TLR_BASE)/cm-api
+COMMON_INCDIR=$(CMAPI_INCDIR)
 
-INCLUDE=-I. -I$(CCAN_DIR)
+COMMON_LIBDIR=.
 
-LIBOBJS=./cm_atomic.o ./cm_ref.o ./cm_object.o ./cm_module.o ./cm_module_loader.o
+INCLUDE=-I$(COMMON_INCDIR) -I$(CCAN_DIR)
+
+COMMON_LIBS=$(COMMON_LIBDIR)/cm_atomic.o $(COMMON_LIBDIR)/cm_ref.o \
+	$(COMMON_LIBDIR)/cm_object.o $(COMMON_LIBDIR)/cm_module.o \
+	$(COMMON_LIBDIR)/cm_module_loader.o
 
 ifeq ($(DEBUG),true)
-CFLAGS += -g
+CFLAGS += -g  -DCM_DEBUG
 endif
 
-CFLAGS += -fPIC $(INCLUDE) -DCM_DEBUG
+CFLAGS += -fPIC $(INCLUDE)
 
-.PHONY: all clean
+.PHONY: all clean install
 
-all: $(LIBOBJS)
+all: $(COMMON_LIBS)
 
--include $(LIBOBJS:.o=.d)
-$(LIBOBJS): %.o: %.c
+-include $(COMMON_LIBS:.o=.d)
+$(COMMON_LIBS): %.o: %.c
 	$(CC) -c -o $@ $< $(CFLAGS)
-
 clean:
-	rm -f $(LIBOBJS) $(LIBS_DIR)/*.d
+	rm -f $(COMMON_LIBS) $(COMMON_LIBDIR)/*.d

@@ -1,31 +1,11 @@
-#ifndef _CM_MANAGER_
-#define _CM_MANAGER_
+#ifndef _CM_MANAGER_H_
+#define _CM_MANAGER_H_
 
 #include "cm_err.h"
 #include "cm_modem.h"
+#include "cm_manager_clbk_defs.h"
 
 struct cm_manager;
-
-typedef void (*cm_manager_modem_added)(struct cm_manager *self,
-				       struct cm_modem *modem,
-				       void *userdata);
-typedef void (*cm_manager_modem_removed)(struct cm_manager *self,
-					 struct cm_modem *modem,
-					 void *userdata);
-
-typedef void (*cm_manager_list_modems_for_each)(struct cm_manager *self,
-				       struct cm_modem *modem,
-				       void *userdata);
-typedef void (*cm_manager_list_modems_done)(struct cm_manager *self,
-				       void *userdata,
-				       cm_err_t err);
-
-typedef void(*cm_manager_start_done)(struct cm_manager *self,
-				void *userdata,
-				cm_err_t err);
-typedef void(*cm_manager_stop_done)(struct cm_manager *self,
-				void *userdata,
-				cm_err_t err);
 
 struct cm_manager * cm_manager_new(cm_err_t *err);
 
@@ -38,7 +18,7 @@ void cm_manager_destroy(struct cm_manager *self);
 /*
  * Return /CM_MANAGER
  */
-const char * cm_manager_get_path(struct cm_manager *self);
+char * cm_manager_get_path(struct cm_manager *self);
 
 void cm_manager_start(struct cm_manager *self,
 		      cm_err_t *err);

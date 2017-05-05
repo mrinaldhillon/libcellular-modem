@@ -13,7 +13,7 @@
 #include "cm_module.h"
 #include "cm_module_loader.h"
 
-#define CM_MODULE_CREATE_SYM	"get_module_entry_symbol"
+#define CM_MODULE_CREATE_SYM	"cm_get_module_entry_symbol"
 
 typedef const char * (*get_module_entry_symbol)(void);
 
@@ -59,6 +59,7 @@ void cm_module_loader_load_from_dirpath(const char *dirpath,
 	int num_loaded = 0;
 	struct cm_module *module = NULL;
 	char *filepath = NULL;
+	char *dot = NULL;
 
 	assert(NULL != dirpath && (0 != strlen(dirpath)) && NULL != err);
 	dirp = opendir(dirpath);
@@ -72,6 +73,12 @@ void cm_module_loader_load_from_dirpath(const char *dirpath,
 		if (0 == strcmp(dirent->d_name, ".") ||
 		    0 == strcmp(dirent->d_name, ".."))
 			continue;
+		if (NULL == (dot = strrchr(dirent->d_name, '.')))
+		    continue;
+		if (0 != strcmp(dot, ".so"))
+		    continue;
+		dot = NULL;
+
 		filepath = cm_module_loader_build_filepath(dirpath,
 							   dirent->d_name,
 							   err);
@@ -152,7 +159,7 @@ struct cm_module * cm_module_loader_load_path(const char *filepath,
 
 	//@todo:check if sopath exists
 	cm_debug("Loading module: %s", filepath);
-	if (0 == load_in_new_namespace)
+	if (1 == load_in_new_namespace)
 		module_handle = dlmopen(LM_ID_NEWLM, filepath, RTLD_NOW);
 	else
 		module_handle = dlopen(filepath, RTLD_NOW);

@@ -62,7 +62,6 @@ static void cm_object_init_internal(struct cm_object *cmobj)
 	cm_ref_init(&cmobj->ref);
 	cm_list_node_init(&cmobj->entry);
 	cmobj->state_initialized = 1;
-	cmobj->state_added = 1;
 }
 
 void cm_object_init(struct cm_object *self)
@@ -217,33 +216,6 @@ char * cm_object_get_path(struct cm_object *cmobj)
 	cm_object_fill_path(cmobj, path, len);
 	return path;
 }
-#if 0
-struct cm_set * cm_set_new(const char *name, struct cm_object *parent,
-			   cm_err_t *err)
-{
-	assert(name && name[0] && err);
-
-	struct cm_set * cmset = (struct cm_set *)calloc(1, sizeof(*cmset));
-	if (!cmset) {
-		cm_warn("Unable allocate enough memory %d", errno);
-		abort();
-	}
-
-	cm_object_init_and_add(&cmset->cmobj, parent, name, err);
-	if (CM_ERR_NONE != *err) {
-		cm_error("Error in initializing cm_set: %s", name);
-		goto free_cmset;
-	}
-
-	cmset->cmobj.release = &cm_set_release;
-	cm_list_head_init(&cmset->list);
-	pthread_mutex_init(&cmset->lock, NULL);
-	return cmset;
-free_cmset:
-	free(cmset);
-	return NULL;
-}
-#endif
 
 static void cm_set_init(struct cm_set *self)
 {
@@ -253,26 +225,37 @@ static void cm_set_init(struct cm_set *self)
 	pthread_mutex_init(&self->lock, NULL);
 }
 
-struct cm_set * cm_set_create(const char *name)
+struct cm_set * cm_set_create(void)
 {
-	assert(name && name[0]);
-
-	struct cm_set * self = (struct cm_set *)calloc(1, sizeof(*self));
+	struct cm_set *self = (struct cm_set *)calloc(1, sizeof(*self));
 	if (!self) {
 		cm_warn("Unable allocate enough memory %d", errno);
 		abort();
 	}
 	cm_set_init(self);
 	self->cmobj.release = &cm_set_release;
-	cm_object_set_name(&self->cmobj, "%s", name);
 	return self;
 }
 
 void cm_set_add(struct cm_set *self, struct cm_object *parent,
-		struct cm_set *cmset, cm_err_t *err)
+		struct cm_set *cmset, cm_err_t *err, const char *name_fmt, ...)
 {
-	cm_object_add(&self->cmobj, parent, cmset, err,
-		      "%s", self->cmobj.name);
+	va_list va;
+	va_start(va, name_fmt);
+	cm_object_add_vargs(&self->cmobj, parent, cmset, err, name_fmt, va);
+	va_end(va);
+}
+
+struct cm_set * cm_set_create_and_add(struct cm_object *parent,
+				      struct cm_set *cmset, cm_err_t *err,
+				      const char *name_fmt, ...)
+{
+	struct cm_set *self = cm_set_create();
+	va_list va;
+	va_start(va, name_fmt);
+	cm_object_add_vargs(&self->cmobj, parent, cmset, err, name_fmt, va);
+	va_end(va);
+	return self;
 }
 
 void cm_set_del(struct cm_set *self)
@@ -288,7 +271,7 @@ struct cm_set * cm_set_get(struct cm_set *self)
 
 void cm_set_put(struct cm_set *self)
 {
-	if(self)
+	assert(self);
 		cm_object_put(&self->cmobj);
 }
 
@@ -296,6 +279,8 @@ struct cm_object * cm_set_get_next(struct cm_set *self,
 				   struct cm_object *cur_entry)
 {
 	assert(self);
+	if (!cur_entry)
+		return NULL;
 	struct cm_object *next_entry = NULL;
 	pthread_mutex_lock(&self->lock);
 	next_entry = cm_list_next(&self->list, cur_entry, entry);
