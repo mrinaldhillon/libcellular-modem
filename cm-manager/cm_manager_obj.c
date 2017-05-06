@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <semaphore.h>
+#include <pthread.h>
 #include "cm_err.h"
 #include "cm_log.h"
 #include "cm_object.h"
@@ -30,6 +31,44 @@ __attribute__((destructor)) void cm_manager_obj_destructor(void)
 static const char * cm_manager_obj_get_class_name(void)
 {
 	return CLASS_NAME;
+}
+
+static void cm_manager_obj_for_each_modem_get(struct cm_object *modemobj,
+					     void *userdata)
+{
+	assert(modemobj);
+	/* @todo: change this cm_modem_get once implemented in modem */
+	cm_object_get(modemobj);
+}
+
+static struct cm_manager * cm_manager_obj_get(struct cm_manager *self)
+{
+	assert(self && self->priv);
+	cm_object_get(&self->cmobj);
+	cm_set_get(self->priv->modems);
+	cm_set_for_each_safe(self->priv->modems,
+			     &cm_manager_obj_for_each_modem_get,
+			     self);
+
+	return self;
+}
+
+static void cm_manager_obj_for_each_modem_put(struct cm_object *modemobj,
+					     void *userdata)
+{
+	assert(modemobj);
+	/* @todo: change this cm_modem_get once implemented in modem */
+	cm_object_put(modemobj);
+}
+
+static void cm_manager_obj_put(struct cm_manager *self)
+{
+	assert(self && self->priv);
+	cm_set_for_each_safe(self->priv->modems,
+			     &cm_manager_obj_for_each_modem_put,
+			     self);
+	cm_set_put(self->priv->modems);
+	cm_object_put(&self->cmobj);
 }
 
 static void cm_manager_obj_start(struct cm_manager *self, cm_err_t *err)
@@ -111,53 +150,31 @@ static void cm_manager_obj_unsubscribe_modem_removed(struct cm_manager *self,
 	// from each manager
 }
 
-static void cm_manager_obj_release_for_each_modem(struct cm_object *modemobj,
-					     void *userdata)
-{
-	assert(modemobj);
-	struct cm_manager *self = (struct cm_manager *)userdata;
-	/* Deleting the modem from internal linked list
-	 * since 'put' may not release it from the list
-	 * if client may have held reference to this modem.
-	 * Upon releasing last reference, will this modem
-	 * be removed from memory, though by deleting from set cm-manager
-	 * has stopped managing this modem. */
-	cm_object_del(modemobj);
-	cm_object_put(modemobj);
-	cm_atomic_dec(&self->priv->num_modems);
-}
-
-static void cm_manager_obj_cleanup(struct cm_manager *self)
-{
-	assert(self && self->priv);
-	cm_set_for_each_safe(self->priv->modems,
-			     &cm_manager_obj_release_for_each_modem,
-			     self);
-	assert(0 == cm_atomic_read(&self->priv->num_modems));
-	cm_debug("CMManager cleanup done");
-	cm_set_del(self->priv->modems);
-	cm_set_put(self->priv->modems);
-}
-
 static void cm_manager_obj_release(struct cm_object *cmobj)
 {
 	assert(cmobj);
 	struct cm_manager *self = to_cm_manager(cmobj);
-	if (self->priv->owner)
-		cm_object_put(&self->priv->owner->cmobj);
+	struct cm_module *owner = self->priv->owner;
 
 	cm_debug("Destroying %s", cm_object_get_name(cmobj));
 	free(self->priv);
 	free(self);
-	/* Increment value to allow destructor to proceed
-	 * This dirty but required, cannot allow unloading from namespace while
-	 * in memory.
-	 * @todo figure alternate solution
-	 */
-	sem_post(&mutex);
+	if (owner) {
+		/* decrement value to 0 in order to block destructor.
+		 * library is unloaded upon relasing owner in release
+		 */
+		sem_wait(&mutex);
+		cm_object_put(&owner->cmobj);
+		/* Increment value to allow destructor to proceed
+		 * This dirty but required, cannot allow unloading from namespace while
+		 * in memory.
+		 * @todo figure alternate solution
+		 */
+		sem_post(&mutex);
+	}
 }
 
-struct cm_manager * cm_manager_obj_new(struct cm_module *owner,
+struct cm_manager * cm_manager_obj_create(struct cm_module *owner,
 				       cm_err_t *err)
 {
 	assert(err);
@@ -177,7 +194,6 @@ struct cm_manager * cm_manager_obj_new(struct cm_module *owner,
 
 	cm_object_init(&self->cmobj);
 	self->cmobj.release = &cm_manager_obj_release;
-	/* @todo: modems should be created in start */
 	priv->modems = cm_set_create_and_add(&self->cmobj, NULL,
 					     err, "CMModems");
 	if (CM_ERR_NONE != *err) {
@@ -186,12 +202,9 @@ struct cm_manager * cm_manager_obj_new(struct cm_module *owner,
 	}
 
 	cm_atomic_set(&priv->num_modems, 0);
-	if (owner)
-		cm_object_get(&owner->cmobj);
-	priv->owner = owner;
 	self->priv = priv;
-
-	self->cleanup = &cm_manager_obj_cleanup;
+	self->get = &cm_manager_obj_get;
+	self->put = &cm_manager_obj_put;
 	self->start = &cm_manager_obj_start;
 	self->start_async = &cm_manager_obj_start_async;
 	self->stop = &cm_manager_obj_stop;
@@ -201,17 +214,70 @@ struct cm_manager * cm_manager_obj_new(struct cm_module *owner,
 	self->get_class_name = &cm_manager_obj_get_class_name;
 
 	if (owner) {
-		/* decrement value to 0 in order to block destructor.
-		 * library is unloaded upon relasing owner in release
-		 */
-		sem_wait(&mutex);
+		cm_object_get(&owner->cmobj);
+		priv->owner = owner;
 	}
 
 	return self;
 out_unref:
-	cm_manager_obj_cleanup(self);
 	cm_object_put(&self->cmobj);
 	return NULL;
+}
+
+struct cm_manager * cm_manager_obj_new(struct cm_module *owner,
+				       cm_err_t *err)
+{
+	return cm_manager_obj_create(owner, err);
+}
+
+struct cm_manager_new_ctx {
+	struct cm_module *owner;
+	cm_manager_new_done done;
+	void *userdata;
+};
+
+static void * cm_manager_obj_new_thread(void *userdata)
+{
+	cm_err_t err = CM_ERR_NONE;
+	struct cm_manager *self = NULL;
+	struct cm_manager_new_ctx * ctx = NULL;
+
+	ctx = (struct cm_manager_new_ctx *)userdata;
+	assert(ctx && ctx->done);
+
+	self = cm_manager_obj_create(ctx->owner, &err);
+	ctx->done(self, ctx->userdata, err);
+	/* remove the reference since callee may have take one
+	 * else this object will be released*/
+	cm_manager_obj_put(self);
+	free(ctx);
+	pthread_exit(0);
+}
+
+void cm_manager_obj_new_async(struct cm_module *owner,
+			      cm_manager_new_done done,
+			      void *userdata)
+{
+	struct cm_manager_new_ctx *ctx =
+		(struct cm_manager_new_ctx *)calloc(1, sizeof(*ctx));
+	if (!ctx) {
+		cm_error("Unable to allocate enough space %d",errno);
+		abort();
+	}
+
+	ctx->owner = owner;
+	ctx->done = done;
+	ctx->userdata = userdata;
+
+	pthread_t thread_id;
+	pthread_attr_t attr;
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+	pthread_create(&thread_id, &attr,
+		       cm_manager_obj_new_thread, ctx);
+	pthread_attr_destroy(&attr);
+	pthread_detach(thread_id);
+
 }
 
 /* Dynamic library loading is done in two steps

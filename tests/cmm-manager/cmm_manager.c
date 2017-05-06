@@ -13,7 +13,7 @@ int main()
 	cmm_manager_start(manager, &err);
 	cmm_manager_stop(manager, &err);
 	printf("Succesfully created CMMManager: %s\n Winding down\n", path);
-	cmm_manager_destroy(manager);
+	cmm_manager_unref(manager);
 	free(path);
 	return 0;
 }

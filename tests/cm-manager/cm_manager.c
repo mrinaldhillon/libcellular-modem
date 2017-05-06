@@ -10,6 +10,6 @@ int main()
 	cm_manager_start(manager, &err);
 	cm_manager_stop(manager, &err);
 	printf("Succesfully created cm manager\n Winding down\n");
-	cm_manager_destroy(manager);
+	cm_manager_unref(manager);
 	return 0;
 }

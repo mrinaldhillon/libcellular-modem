@@ -18,7 +18,7 @@ CM_MANAGER_TESTBIN=cm_manager
 all: $(CM_MANAGER_TESTBIN) 
 
 $(CM_MANAGER_TESTBIN):
-	$(CC) $(CM_MANAGER_TESTBIN).c -o $@ $(CFLAGS) $(INCLUDE) -L $(CMMANAGER_LIBDIR) -lcm-manager 
+	$(CC) $(CM_MANAGER_TESTBIN).c -o $@ $(CFLAGS) $(INCLUDE) -L $(CMMANAGER_LIBDIR) -lcm-manager -Wl,-rpath,$(CMMANAGER_LIBDIR) 
 
 clean:
 	rm -f $(CM_MANAGER_TESTBIN) ./*.d

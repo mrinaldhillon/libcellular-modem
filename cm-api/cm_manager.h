@@ -9,11 +9,12 @@ struct cm_manager;
 
 struct cm_manager * cm_manager_new(cm_err_t *err);
 
+void cm_manager_new_async(cm_manager_new_done done,
+			  void *userdata);
+
 struct cm_manager * cm_manager_ref(struct cm_manager *self);
 
 void cm_manager_unref(struct cm_manager *self);
-
-void cm_manager_destroy(struct cm_manager *self);
 
 /*
  * Return /CM_MANAGER

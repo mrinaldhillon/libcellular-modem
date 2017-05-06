@@ -12,8 +12,9 @@ struct cmm_manager {
 	struct cm_object cmobj;
 	struct cmm_manager_priv *priv;
 
-	/* needed before final unref */
-	void (*cleanup)(struct cmm_manager *self);
+	struct cmm_manager *(*get)(struct cmm_manager *self);
+
+	void (*put)(struct cmm_manager *self);
 
 	void (*start)(struct cmm_manager *self, cm_err_t *err);
 

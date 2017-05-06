@@ -18,7 +18,7 @@ CMM_MANAGER_TESTBIN=cmm_manager
 all: $(CMM_MANAGER_TESTBIN) 
 
 $(CMM_MANAGER_TESTBIN):
-	$(CC) $(CMM_MANAGER_TESTBIN).c -o $@ $(CFLAGS) $(INCLUDE) -L $(CMMMANAGER_LIBDIR) -lcmm-manager 
+	$(CC) $(CMM_MANAGER_TESTBIN).c -o $@ $(CFLAGS) $(INCLUDE) -L $(CMMMANAGER_LIBDIR) -lcmm-manager -Wl,-rpath,$(CMMMANAGER_LIBDIR) 
 
 clean:
 	rm -f $(CMM_MANAGER_TESTBIN) ./*.d

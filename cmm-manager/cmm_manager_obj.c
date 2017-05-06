@@ -21,6 +21,46 @@
 
 /* @tbd: Should CMMManeger be singleton */
 
+static void cmm_manager_obj_for_each_cmm_get(struct cm_object *cmmobj,
+					     void *userdata)
+{
+	assert(cmmobj);
+	/* @todo: change this cm_modem_get once implemented in modem */
+	struct cm_manager *cmm = to_cm_manager(cmmobj);
+	cmm->get(cmm);
+}
+
+static struct cmm_manager * cmm_manager_obj_get(struct cmm_manager *self)
+{
+	assert(self && self->priv);
+	cm_object_get(&self->cmobj);
+	cm_set_get(self->priv->cmmset);
+	cm_set_for_each_safe(self->priv->cmmset,
+			     &cmm_manager_obj_for_each_cmm_get,
+			     self);
+
+	return self;
+}
+
+static void cmm_manager_obj_for_each_cmm_put(struct cm_object *cmmobj,
+					     void *userdata)
+{
+	assert(cmmobj);
+	/* @todo: change this cm_modem_get once implemented in modem */
+	struct cm_manager *cmm = to_cm_manager(cmmobj);
+	cmm->put(cmm);
+}
+
+static void cmm_manager_obj_put(struct cmm_manager *self)
+{
+	assert(self && self->priv);
+	cm_set_for_each_safe(self->priv->cmmset,
+			     &cmm_manager_obj_for_each_cmm_put,
+			     self);
+	cm_set_put(self->priv->cmmset);
+	cm_object_put(&self->cmobj);
+}
+
 void cmm_manager_obj_start(struct cmm_manager *self, cm_err_t *err)
 {
 	assert(self && self->priv && err);
@@ -98,30 +138,6 @@ static void cmm_manager_obj_unsubscribe_modem_removed(struct cmm_manager *self,
 {
 	assert(self && self->priv && err);
 	// from each manager
-}
-
-static void cmm_manager_release_for_each_cmm(struct cm_object *cmmobj,
-					     void *userdata)
-{
-	assert(cmmobj);
-	struct cmm_manager *self = (struct cmm_manager *)userdata;
-	struct cm_manager *cmm = to_cm_manager(cmmobj);
-	cmm->cleanup(cmm);
-	cm_object_del(cmmobj);
-	cm_object_put(cmmobj);
-	cm_atomic_dec(&self->priv->num_cmm);
-}
-
-static void cmm_manager_obj_cleanup(struct cmm_manager *self)
-{
-	assert(self && self->priv);
-	cm_set_for_each_safe(self->priv->cmmset,
-			     &cmm_manager_release_for_each_cmm,
-			     self);
-	assert(0 == cm_atomic_read(&self->priv->num_cmm));
-	cm_debug("CMMManager cleanup done");
-	cm_set_del(self->priv->cmmset);
-	cm_set_put(self->priv->cmmset);
 }
 
 static void cmm_manager_obj_release(struct cm_object *cmobj)
@@ -241,13 +257,14 @@ struct cmm_manager * cmm_manager_obj_new(cm_err_t *err)
 					     "CMManagers");
 	if (CM_ERR_NONE != *err) {
 		cm_error("Error in creating CMManagers set %d", *err);
-		goto out_unref;
+		goto out_putself;
 	}
 
 	cm_atomic_set(&priv->num_cmm, 0);
 	self->priv = priv;
 
-	self->cleanup = &cmm_manager_obj_cleanup;
+	self->get = &cmm_manager_obj_get;
+	self->put = &cmm_manager_obj_put;
 	self->start = &cmm_manager_obj_start;
 	self->start_async = &cmm_manager_obj_start_async;
 	self->stop = &cmm_manager_obj_stop;
@@ -261,12 +278,13 @@ struct cmm_manager * cmm_manager_obj_new(cm_err_t *err)
 					self, err);
 	if (CM_ERR_NONE != *err) {
 		cm_error("Could not load cmm manager modules %d", *err);
-		goto out_unref;
+		goto out_putcmset;
 	}
 	return self;
 
-out_unref:
-	cmm_manager_obj_cleanup(self);
+out_putcmset:
+	cm_set_put(priv->cmmset);
+out_putself:
 	cm_object_put(&self->cmobj);
 	return NULL;
 }
