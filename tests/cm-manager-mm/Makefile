@@ -1,0 +1,24 @@
+include $(TLR_BASE)/build/rds00008.mk
+
+CMAPI_INCDIR=$(TLR_BASE)/cm-api
+CMMANAGER_INCDIR=$(CMAPI_INCDIR)
+
+CMMANAGER_LIBDIR=$(TLR_BASE)/cm-manager-mm
+
+INCLUDE=-I$(CMMANAGER_INCDIR)
+
+ifeq ($(DEBUG),true)
+CFLAGS += -g -DCM_DEBUG
+endif
+
+.PHONY: all clean
+
+CM_MANAGER_TESTBIN=cm_manager
+
+all: $(CM_MANAGER_TESTBIN) 
+
+$(CM_MANAGER_TESTBIN):
+	$(CC) $(CM_MANAGER_TESTBIN).c -o $@ $(CFLAGS) $(INCLUDE) -L $(CMMANAGER_LIBDIR) -lcm-manager-mm -Wl,-rpath,$(CMMANAGER_LIBDIR)
+
+clean:
+	rm -f $(CM_MANAGER_TESTBIN) ./*.d

@@ -6,6 +6,10 @@
 
 struct cm_manager;
 
+typedef void (*cm_manager_new_done)(struct cm_manager *manager,
+				    void *userdata,
+				    cm_err_t *err);
+
 typedef void (*cm_manager_modem_added)(struct cm_manager *self,
 				       struct cm_modem *modem,
 				       void *userdata);

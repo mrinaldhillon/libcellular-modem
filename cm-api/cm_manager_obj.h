@@ -66,6 +66,12 @@ static inline struct cm_manager * to_cm_manager(struct cm_object *cmobj)
  * are still in memory, provide NULL otherwise */
 struct cm_manager * cm_manager_obj_new(struct cm_module *owner,
 				       cm_err_t *err);
+
+void cm_manager_obj_new_async(struct cm_module *owner,
+			      cm_manager_new_done done,
+			      void *userdata);
+
+
 #if 0
 #if !defined(_CM_MANAGER_H_)
 
