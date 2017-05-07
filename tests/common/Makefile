@@ -3,6 +3,7 @@ include $(TLR_BASE)/build/rds00008.mk
 CMATOMIC_BIN=cm_atomic
 CMREF_BIN=cm_ref
 CMLOG_BIN=cm_log
+CMTHREAD_BIN=cm_thread
 CMMODULE_BIN=cm_module_loader
 
 CMAPI_INCDIR=$(TLR_BASE)/cm-api
@@ -13,7 +14,9 @@ COMMON_LIBDIR=$(TLR_BASE)/common
 CMATOMIC_OBJS=$(COMMON_LIBDIR)/cm_atomic.o
 CMREF_OBJS=$(CMATOMIC_OBJS) $(COMMON_LIBDIR)/cm_ref.o
 CMOBJECT_OBJS=$(CMREF_OBJS) $(COMMON_LIBDIR)/cm_object.o
-CMMODULE_OBJS=$(CMOBJECT_OBJS) $(COMMON_LIBDIR)/cm_module.o \
+CMTHREAD_OBJS=$(COMMON_LIBDIR)/cm_thread.o
+CMMODULE_OBJS=$(CMOBJECT_OBJS) $(CMTHREAD_OBJS) \
+	      $(COMMON_LIBDIR)/cm_module.o \
 	      $(COMMON_LIBDIR)/cm_module_loader.o
 
 CMMODULE_FOO_SO=libcm-module-foo.so
@@ -27,7 +30,7 @@ CFLAGS += $(INCLUDE) -DCM_DEBUG
 
 .PHONY: all clean
 
-all: $(CMATOMIC_BIN) $(CMREF_BIN) $(CMLOG_BIN) $(CMMODULE_BIN) $(CMMODULE_FOO_SO)
+all: $(CMATOMIC_BIN) $(CMREF_BIN) $(CMLOG_BIN) $(CMTHREAD_BIN) $(CMMODULE_BIN) $(CMMODULE_FOO_SO)
 
 $(CMATOMIC_BIN): $(CMATOMIC_OBJS)
 	$(CC) $(CMATOMIC_BIN).c -o $@ $^ $(CFLAGS)
@@ -39,6 +42,8 @@ $(CMMODULE_BIN): $(CMMODULE_OBJS)
 	$(CC) $(CMMODULE_BIN).c -o $@ $^ $(CFLAGS) -ldl -lpthread
 $(CMMODULE_FOO_SO): $(CMMODULE_FOO_SO_OBJS)
 	$(CC) -Wl,-soname,$(CMMODULE_FOO_SO) -shared $^ -o $@
+$(CMTHREAD_BIN): $(CMTHREAD_OBJS)
+	$(CC) $(CMTHREAD_BIN).c -o $@ $^ $(CFLAGS) -lpthread
 
 # Dependancy rule
 -include $(CMMODULE_FOO_SO_OBJS:.o=.d)
@@ -50,6 +55,7 @@ clean:
 	rm -f $(CMATOMIC_BIN)
 	rm -f $(CMREF_BIN)
 	rm -f $(CMLOG_BIN)
+	rm -f $(CMTHREAD_BIN)
 	rm -f $(CMMODULE_BIN)
 	rm -f $(CMMODULE_FOO_SO_OBJS)
 	rm -f $(CMMODULE_FOO_SO)

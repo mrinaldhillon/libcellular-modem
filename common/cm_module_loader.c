@@ -1,5 +1,4 @@
 #include <unistd.h>
-#include <pthread.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -8,6 +7,7 @@
 #include <errno.h>
 #include <dlfcn.h>
 #include <link.h>
+#include "cm_thread.h"
 #include "cm_err.h"
 #include "cm_log.h"
 #include "cm_module.h"
@@ -130,19 +130,19 @@ static void * cm_module_loader_close_handle(void *module_handle)
 	if (NULL != (error = dlerror())) {
 		cm_warn("Could not close module handle %s", error);
 	}
-	pthread_exit(0);
+	return NULL;
 }
 
 static void cm_module_loader_unload_module(void *module_handle)
 {
-	pthread_t thread_id;
-	pthread_attr_t attr;
-	pthread_attr_init(&attr);
-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-	pthread_create(&thread_id, &attr,
-		       cm_module_loader_close_handle, module_handle);
-	pthread_attr_destroy(&attr);
-	pthread_detach(thread_id);
+	cm_err_t err = CM_ERR_NONE;
+	cm_thread_t thread_id;
+	cm_thread_create(&thread_id, &cm_module_loader_close_handle,
+			 module_handle, CM_THREAD_CREATE_DETACHED,
+			 &err);
+	if (CM_ERR_NONE != err) {
+		cm_warn("Error in unloading the module %d", err);
+	}
 }
 
 struct cm_module * cm_module_loader_load_path(const char *filepath,

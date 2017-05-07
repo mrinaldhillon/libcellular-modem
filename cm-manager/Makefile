@@ -22,6 +22,7 @@ INCLUDE=-I$(CMAPI_INCDIR) \
 COMMON_LIBS=$(COMMON_LIBDIR)/cm_atomic.o \
 	    $(COMMON_LIBDIR)/cm_ref.o \
 	    $(COMMON_LIBDIR)/cm_object.o \
+	    $(COMMON_LIBDIR)/cm_thread.o \
 	    $(COMMON_LIBDIR)/cm_module.o \
 	    $(COMMON_LIBDIR)/cm_module_loader.o
 

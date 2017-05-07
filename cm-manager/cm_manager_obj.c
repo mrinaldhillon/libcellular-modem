@@ -2,7 +2,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <semaphore.h>
-#include <pthread.h>
+#include "cm_thread.h"
 #include "cm_err.h"
 #include "cm_log.h"
 #include "cm_object.h"
@@ -23,7 +23,12 @@ __attribute__((constructor)) void cm_manager_obj_constructor(void)
 }
 __attribute__((destructor)) void cm_manager_obj_destructor(void)
 {
-	sem_wait(&mutex);
+	int err = 0;
+	sem_trywait(&mutex);
+	if (0 != (err = errno)) {
+		cm_warn("Could not decrement semaphore required to unload \
+			CMManager module, bugging out %d", err);
+	}
 	cm_debug("Unloading: %s", CLASS_NAME);
 	sem_destroy(&mutex);
 }
@@ -229,7 +234,7 @@ struct cm_manager * cm_manager_obj_new(struct cm_module *owner,
 {
 	return cm_manager_obj_create(owner, err);
 }
-
+//@todo need new and free methods for ctx
 struct cm_manager_new_ctx {
 	struct cm_module *owner;
 	cm_manager_new_done done;
@@ -251,13 +256,16 @@ static void * cm_manager_obj_new_thread(void *userdata)
 	 * else this object will be released*/
 	cm_manager_obj_put(self);
 	free(ctx);
-	pthread_exit(0);
+	return NULL;
 }
 
 void cm_manager_obj_new_async(struct cm_module *owner,
 			      cm_manager_new_done done,
 			      void *userdata)
 {
+	cm_err_t err = CM_ERR_NONE;
+
+	assert(done);
 	struct cm_manager_new_ctx *ctx =
 		(struct cm_manager_new_ctx *)calloc(1, sizeof(*ctx));
 	if (!ctx) {
@@ -269,15 +277,17 @@ void cm_manager_obj_new_async(struct cm_module *owner,
 	ctx->done = done;
 	ctx->userdata = userdata;
 
-	pthread_t thread_id;
-	pthread_attr_t attr;
-	pthread_attr_init(&attr);
-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-	pthread_create(&thread_id, &attr,
-		       cm_manager_obj_new_thread, ctx);
-	pthread_attr_destroy(&attr);
-	pthread_detach(thread_id);
-
+	cm_thread_t thread_id;
+	cm_thread_create(&thread_id, &cm_manager_obj_new_thread,
+			 ctx, CM_THREAD_CREATE_DETACHED, &err);
+	if (CM_ERR_NONE != err) {
+		err |= CM_ERR_MANAGER_NEW;
+		goto out_freectx;
+	}
+	return;
+out_freectx:
+	free(ctx);
+	done(NULL, userdata, err);
 }
 
 /* Dynamic library loading is done in two steps
