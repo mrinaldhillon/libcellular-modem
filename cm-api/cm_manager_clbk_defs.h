@@ -13,24 +13,25 @@ typedef void (*cm_manager_new_done)(struct cm_manager *manager,
 typedef void (*cm_manager_modem_added)(struct cm_manager *self,
 				       struct cm_modem *modem,
 				       void *userdata);
+
 typedef void (*cm_manager_modem_removed)(struct cm_manager *self,
 					 struct cm_modem *modem,
 					 void *userdata);
 
 typedef void (*cm_manager_list_modems_for_each)(struct cm_manager *self,
-				       struct cm_modem *modem,
-				       void *userdata);
+						struct cm_modem *modem,
+						void *userdata);
 typedef void (*cm_manager_list_modems_done)(struct cm_manager *self,
-				       void *userdata,
-				       cm_err_t err);
+					    void *userdata,
+					    cm_err_t err);
 
 typedef void(*cm_manager_start_done)(struct cm_manager *self,
-				void *userdata,
-				cm_err_t err);
+				     void *userdata,
+				     cm_err_t err);
 
 typedef void(*cm_manager_stop_done)(struct cm_manager *self,
-				void *userdata,
-				cm_err_t err);
+				    void *userdata,
+				    cm_err_t err);
 
 
 #endif /* _CM_MANAGER_CLBK_DEFS_H_ */

@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
 #include "libcmm-manager.h"
 
 int main()
@@ -16,5 +15,4 @@ int main()
 	printf("Succesfully created CMMManager: %s\n Winding down\n", path);
 	cmm_manager_unref(manager);
 	free(path);
-	pthread_exit(0);
 }

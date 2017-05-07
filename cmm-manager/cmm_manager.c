@@ -9,6 +9,12 @@ struct cmm_manager * cmm_manager_new(cm_err_t *err)
 	return cmm_manager_obj_new(err);
 }
 
+void cmm_manager_new_async(cmm_manager_new_done done,
+			   void *userdata)
+{
+	cmm_manager_obj_new_async(done, userdata);
+}
+
 struct cmm_manager * cmm_manager_ref(struct cmm_manager *self)
 {
 	assert(self);

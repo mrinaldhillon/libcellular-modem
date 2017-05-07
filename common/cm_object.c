@@ -318,9 +318,9 @@ void cm_set_for_each(struct cm_set *self,
 }
 
 void cm_set_for_each_safe(struct cm_set *self,
-		     void (*for_each)(struct cm_object *cmobj,
-				      void *userdata),
-		     void *userdata)
+			  void (*for_each)(struct cm_object *cmobj,
+					   void *userdata),
+			  void *userdata)
 {
 	assert(self && for_each);
 	struct cm_object *cmobj = NULL, *next = NULL;

@@ -73,13 +73,4 @@ void cm_manager_obj_new_async(struct cm_module *owner,
 			      cm_manager_new_done done,
 			      void *userdata);
 
-
-#if 0
-#if !defined(_CM_MANAGER_H_)
-
-#define cm_manager_new cm_manager_obj_new
-struct cm_manager * cm_manager_new(cm_err_t *err);
-#endif /* !defined(_CM_MANAGER_H_) */
-#endif
-
 #endif /* _CM_MANAGER_OBJ_H_ */

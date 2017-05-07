@@ -1,0 +1,521 @@
+diff --git a/cm-api/cm_err.h b/cm-api/cm_err.h
+index df3b72b..7c1f3b4 100644
+--- a/cm-api/cm_err.h
++++ b/cm-api/cm_err.h
+@@ -13,8 +13,8 @@ typedef enum {
+ 	CM_ERR_MODULE_LOADER_DLCLOSE,
+ 	CM_ERR_MODULE_LOADER_OPENDIR,
+ 	CM_ERR_MODULE_LOADER_ELIBACC,
+-	CM_ERR_MANAGER_NEW
+-
++	CM_ERR_MMANAGER_NEW,
++	CM_ERR_MANAGER_NEW,
+ } cm_err_t;
+ 
+ #endif /* _CM_ERR_H_ */
+diff --git a/cm-api/cm_manager_clbk_defs.h b/cm-api/cm_manager_clbk_defs.h
+index ceccb7d..b922316 100644
+--- a/cm-api/cm_manager_clbk_defs.h
++++ b/cm-api/cm_manager_clbk_defs.h
+@@ -13,24 +13,25 @@ typedef void (*cm_manager_new_done)(struct cm_manager *manager,
+ typedef void (*cm_manager_modem_added)(struct cm_manager *self,
+ 				       struct cm_modem *modem,
+ 				       void *userdata);
++
+ typedef void (*cm_manager_modem_removed)(struct cm_manager *self,
+ 					 struct cm_modem *modem,
+ 					 void *userdata);
+ 
+ typedef void (*cm_manager_list_modems_for_each)(struct cm_manager *self,
+-				       struct cm_modem *modem,
+-				       void *userdata);
++						struct cm_modem *modem,
++						void *userdata);
+ typedef void (*cm_manager_list_modems_done)(struct cm_manager *self,
+-				       void *userdata,
+-				       cm_err_t err);
++					    void *userdata,
++					    cm_err_t err);
+ 
+ typedef void(*cm_manager_start_done)(struct cm_manager *self,
+-				void *userdata,
+-				cm_err_t err);
++				     void *userdata,
++				     cm_err_t err);
+ 
+ typedef void(*cm_manager_stop_done)(struct cm_manager *self,
+-				void *userdata,
+-				cm_err_t err);
++				    void *userdata,
++				    cm_err_t err);
+ 
+ 
+ #endif /* _CM_MANAGER_CLBK_DEFS_H_ */
+diff --git a/cm-api/cm_manager_obj.h b/cm-api/cm_manager_obj.h
+index 72fcb4f..aaa6c7c 100644
+--- a/cm-api/cm_manager_obj.h
++++ b/cm-api/cm_manager_obj.h
+@@ -73,13 +73,4 @@ void cm_manager_obj_new_async(struct cm_module *owner,
+ 			      cm_manager_new_done done,
+ 			      void *userdata);
+ 
+-
+-#if 0
+-#if !defined(_CM_MANAGER_H_)
+-
+-#define cm_manager_new cm_manager_obj_new
+-struct cm_manager * cm_manager_new(cm_err_t *err);
+-#endif /* !defined(_CM_MANAGER_H_) */
+-#endif
+-
+ #endif /* _CM_MANAGER_OBJ_H_ */
+diff --git a/cm-api/cmm_manager.h b/cm-api/cmm_manager.h
+index 78b0329..3faea52 100644
+--- a/cm-api/cmm_manager.h
++++ b/cm-api/cmm_manager.h
+@@ -8,6 +8,9 @@ struct cmm_manager;
+ 
+ struct cmm_manager * cmm_manager_new(cm_err_t *err);
+ 
++void cmm_manager_new_async(cmm_manager_new_done done,
++			   void *userdata);
++
+ struct cmm_manager * cmm_manager_ref(struct cmm_manager *self);
+ 
+ void cmm_manager_unref(struct cmm_manager *self);
+diff --git a/cm-api/cmm_manager_clbk_defs.h b/cm-api/cmm_manager_clbk_defs.h
+index 04a6edc..505a9ca 100644
+--- a/cm-api/cmm_manager_clbk_defs.h
++++ b/cm-api/cmm_manager_clbk_defs.h
+@@ -6,27 +6,32 @@
+ 
+ struct cmm_manager;
+ 
++typedef void (*cmm_manager_new_done)(struct cmm_manager *manager,
++				     void *userdata,
++				     cm_err_t err);
++
+ typedef void (*cmm_manager_modem_added)(struct cmm_manager *self,
+-				       struct cm_modem *modem,
+-				       void *userdata);
++					struct cm_modem *modem,
++					void *userdata);
++
+ typedef void (*cmm_manager_modem_removed)(struct cmm_manager *self,
+-					 struct cm_modem *modem,
+-					 void *userdata);
++					  struct cm_modem *modem,
++					  void *userdata);
+ 
+ typedef void (*cmm_manager_list_modems_for_each)(struct cmm_manager *self,
+-				       struct cm_modem *modem,
+-				       void *userdata);
++						 struct cm_modem *modem,
++						 void *userdata);
+ typedef void (*cmm_manager_list_modems_done)(struct cmm_manager *self,
+-				       void *userdata,
+-				       cm_err_t err);
++					     void *userdata,
++					     cm_err_t err);
+ 
+ typedef void(*cmm_manager_start_done)(struct cmm_manager *self,
+-				void *userdata,
+-				cm_err_t err);
++				      void *userdata,
++				      cm_err_t err);
+ 
+ typedef void(*cmm_manager_stop_done)(struct cmm_manager *self,
+-				void *userdata,
+-				cm_err_t err);
++				     void *userdata,
++				     cm_err_t err);
+ 
+ 
+ #endif /* _CMM_MANAGER_CLBK_DEFS_H_ */
+diff --git a/cm-api/cmm_manager_obj.h b/cm-api/cmm_manager_obj.h
+index fd5e45a..da454f2 100644
+--- a/cm-api/cmm_manager_obj.h
++++ b/cm-api/cmm_manager_obj.h
+@@ -12,6 +12,8 @@ struct cmm_manager {
+ 	struct cm_object cmobj;
+ 	struct cmm_manager_priv *priv;
+ 
++	const char *(*get_class_name)(void);
++
+ 	struct cmm_manager *(*get)(struct cmm_manager *self);
+ 
+ 	void (*put)(struct cmm_manager *self);
+@@ -61,11 +63,8 @@ static inline struct cmm_manager * to_cmm_manager(struct cm_object *cmobj)
+ }
+ 
+ struct cmm_manager * cmm_manager_obj_new(cm_err_t *err);
+-#if 0
+-#if !defined(_CMM_MANAGER_H_)
+ 
+-#define cmm_manager_new		cmm_manager_obj_new
+-#endif /* !defined(_CMM_MANAGER_H_) */
+-#endif
++void cmm_manager_obj_new_async(cmm_manager_new_done done,
++			       void *userdata);
+ 
+ #endif /* _CMM_MANAGER_OBJ_H_ */
+diff --git a/cm-manager/cm_manager_obj.c b/cm-manager/cm_manager_obj.c
+index 177ca2a..ae59f39 100644
+--- a/cm-manager/cm_manager_obj.c
++++ b/cm-manager/cm_manager_obj.c
+@@ -11,7 +11,7 @@
+ #include "cm_manager_obj.h"
+ #include "cm_modem.h"
+ 
+-#define	CLASS_NAME		"CMManager"
++#define	CMMANGER_CLASS_NAME		"CMManager"
+ /* @tbd: Should CMManeger be singleton */
+ //@todo: revisit unloading logic and semaphore logic
+ static sem_t mutex;
+@@ -19,23 +19,18 @@ static sem_t mutex;
+ __attribute__((constructor)) void cm_manager_obj_constructor(void)
+ {
+ 	sem_init(&mutex, 0, 1);
+-	cm_debug("Loading: %s", CLASS_NAME);
++	cm_debug("Loading: %s", CMMANGER_CLASS_NAME);
+ }
+ __attribute__((destructor)) void cm_manager_obj_destructor(void)
+ {
+-	int err = 0;
+-	sem_trywait(&mutex);
+-	if (0 != (err = errno)) {
+-		cm_warn("Could not decrement semaphore required to unload \
+-			CMManager module, bugging out %d", err);
+-	}
+-	cm_debug("Unloading: %s", CLASS_NAME);
++	sem_wait(&mutex);
++	cm_debug("Unloading: %s", CMMANGER_CLASS_NAME);
+ 	sem_destroy(&mutex);
+ }
+ 
+ static const char * cm_manager_obj_get_class_name(void)
+ {
+-	return CLASS_NAME;
++	return CMMANGER_CLASS_NAME;
+ }
+ 
+ static void cm_manager_obj_for_each_modem_get(struct cm_object *modemobj,
+@@ -62,7 +57,7 @@ static void cm_manager_obj_for_each_modem_put(struct cm_object *modemobj,
+ 					     void *userdata)
+ {
+ 	assert(modemobj);
+-	/* @todo: change this cm_modem_get once implemented in modem */
++	/* @todo: change this cm_modem_put once implemented in modem */
+ 	cm_object_put(modemobj);
+ }
+ 
+@@ -75,7 +70,59 @@ static void cm_manager_obj_put(struct cm_manager *self)
+ 	cm_set_put(self->priv->modems);
+ 	cm_object_put(&self->cmobj);
+ }
++#if 0
++//@todo need new and free methods for ctx
++struct cm_manager_put_ctx {
++	struct cm_manager *self;
++	cm_manager_put_done done;
++	void *userdata;
++};
++
++static void * cm_manager_obj_put_thread(void *userdata)
++{
++	cm_err_t err = CM_ERR_NONE;
++	struct cm_manager *self = NULL;
++	struct cm_manager_put_ctx * ctx = NULL;
++
++	ctx = (struct cm_manager_put_ctx *)userdata;
++	assert(ctx && ctx->self && ctx->done);
++
++	cm_manager_obj_put(self);
++	ctx->done(ctx->userdata, err);
++	free(ctx);
++	return NULL;
++}
++
++void cm_manager_obj_put_async(struct cm_module *owner,
++			      cm_manager_put_done done,
++			      void *userdata)
++{
++	cm_err_t err = CM_ERR_NONE;
+ 
++	assert(done);
++	struct cm_manager_put_ctx *ctx =
++		(struct cm_manager_put_ctx *)calloc(1, sizeof(*ctx));
++	if (!ctx) {
++		cm_error("Unable to allocate enough space %d",errno);
++		abort();
++	}
++
++	ctx->done = done;
++	ctx->userdata = userdata;
++
++	cm_thread_t thread_id;
++	cm_thread_create(&thread_id, &cm_manager_obj_put_thread,
++			 ctx, CM_THREAD_CREATE_DETACHED, &err);
++	if (CM_ERR_NONE != err) {
++		err |= CM_ERR_MANAGER_PUT_ASYNC;
++		goto out_freectx;
++	}
++	return;
++out_freectx:
++	free(ctx);
++	done(userdata, err);
++}
++#endif
+ static void cm_manager_obj_start(struct cm_manager *self, cm_err_t *err)
+ {
+ 	assert(self && self->priv && err);
+@@ -179,7 +226,7 @@ static void cm_manager_obj_release(struct cm_object *cmobj)
+ 	}
+ }
+ 
+-struct cm_manager * cm_manager_obj_create(struct cm_module *owner,
++static struct cm_manager * cm_manager_obj_create(struct cm_module *owner,
+ 				       cm_err_t *err)
+ {
+ 	assert(err);
+@@ -203,7 +250,7 @@ struct cm_manager * cm_manager_obj_create(struct cm_module *owner,
+ 					     err, "CMModems");
+ 	if (CM_ERR_NONE != *err) {
+ 		cm_error("Error in creating CMModems cmset %d", *err);
+-		goto out_unref;
++		goto out_putself;
+ 	}
+ 
+ 	cm_atomic_set(&priv->num_modems, 0);
+@@ -224,7 +271,7 @@ struct cm_manager * cm_manager_obj_create(struct cm_module *owner,
+ 	}
+ 
+ 	return self;
+-out_unref:
++out_putself:
+ 	cm_object_put(&self->cmobj);
+ 	return NULL;
+ }
+diff --git a/cmm-manager/cmm_manager.c b/cmm-manager/cmm_manager.c
+index 58c8172..bacd106 100644
+--- a/cmm-manager/cmm_manager.c
++++ b/cmm-manager/cmm_manager.c
+@@ -9,6 +9,12 @@ struct cmm_manager * cmm_manager_new(cm_err_t *err)
+ 	return cmm_manager_obj_new(err);
+ }
+ 
++void cmm_manager_new_async(cmm_manager_new_done done,
++			   void *userdata)
++{
++	cmm_manager_obj_new_async(done, userdata);
++}
++
+ struct cmm_manager * cmm_manager_ref(struct cmm_manager *self)
+ {
+ 	assert(self);
+diff --git a/cmm-manager/cmm_manager_obj.c b/cmm-manager/cmm_manager_obj.c
+index e0d105c..124c708 100644
+--- a/cmm-manager/cmm_manager_obj.c
++++ b/cmm-manager/cmm_manager_obj.c
+@@ -8,19 +8,28 @@
+ #include "cm_container_of.h"
+ #include "cm_atomic.h"
+ #include "cm_object.h"
+-#include "cmm_manager_priv.h"
+-#include "cmm_manager_obj.h"
+ #include "cm_module.h"
+ #include "cm_module_loader.h"
++#include "cm_thread.h"
+ #include "cm_modem.h"
++#include "cmm_manager_priv.h"
++#include "cmm_manager_obj.h"
+ #include "cm_manager_obj.h"
+ 
++
++#define	CMMMANGER_CLASS_NAME		"CMMManager"
++
+ #if !defined(CMM_MANAGER_LIBDIR)
+ #define CMM_MANAGER_LIBDIR		"/usr/lib/cmm-manager"
+ #endif /* !defined CMM_MANAGER_LIBDIR */
+ 
+ /* @tbd: Should CMMManeger be singleton */
+ 
++static const char * cmm_manager_obj_get_class_name(void)
++{
++	return CMMMANGER_CLASS_NAME;
++}
++
+ static void cmm_manager_obj_for_each_cmm_get(struct cm_object *cmmobj,
+ 					     void *userdata)
+ {
+@@ -232,7 +241,7 @@ static void cmm_manager_obj_load_modules_done(void *userdata,
+ 		 cm_atomic_read(&self->priv->num_cmm), err);
+ }
+ 
+-struct cmm_manager * cmm_manager_obj_new(cm_err_t *err)
++struct cmm_manager * cmm_manager_obj_create(cm_err_t *err)
+ {
+ 	assert(err);
+ 	struct cmm_manager_priv *priv =
+@@ -262,7 +271,6 @@ struct cmm_manager * cmm_manager_obj_new(cm_err_t *err)
+ 
+ 	cm_atomic_set(&priv->num_cmm, 0);
+ 	self->priv = priv;
+-
+ 	self->get = &cmm_manager_obj_get;
+ 	self->put = &cmm_manager_obj_put;
+ 	self->start = &cmm_manager_obj_start;
+@@ -271,6 +279,7 @@ struct cmm_manager * cmm_manager_obj_new(cm_err_t *err)
+ 	self->stop_async = &cmm_manager_obj_stop_async;
+ 	self->list_modems = &cmm_manager_obj_list_modems;
+ 	self->list_modems_async = &cmm_manager_obj_list_modems_async;
++	self->get_class_name = &cmm_manager_obj_get_class_name;
+ 
+ 	cm_module_loader_load_from_dirpath(CMM_MANAGER_LIBDIR, 1,
+ 					&cmm_manager_obj_for_each_module_loaded,
+@@ -289,6 +298,67 @@ out_putself:
+ 	return NULL;
+ }
+ 
++
++struct cmm_manager * cmm_manager_obj_new(cm_err_t *err)
++{
++	return cmm_manager_obj_create(err);
++}
++
++//@todo need new and free methods for ctx
++struct cmm_manager_new_ctx {
++	struct cm_module *owner;
++	cmm_manager_new_done done;
++	void *userdata;
++};
++
++static void * cmm_manager_obj_new_thread(void *userdata)
++{
++	cm_err_t err = CM_ERR_NONE;
++	struct cmm_manager *self = NULL;
++	struct cmm_manager_new_ctx * ctx = NULL;
++
++	ctx = (struct cmm_manager_new_ctx *)userdata;
++	assert(ctx && ctx->done);
++
++	self = cmm_manager_obj_create(&err);
++	ctx->done(self, ctx->userdata, err);
++	/* remove the reference since callee may have take one
++	 * else this object will be released*/
++	if (self)
++		cmm_manager_obj_put(self);
++	free(ctx);
++	return NULL;
++}
++
++void cmm_manager_obj_new_async(cmm_manager_new_done done,
++			      void *userdata)
++{
++	cm_err_t err = CM_ERR_NONE;
++
++	assert(done);
++	struct cmm_manager_new_ctx *ctx =
++		(struct cmm_manager_new_ctx *)calloc(1, sizeof(*ctx));
++	if (!ctx) {
++		cm_error("Unable to allocate enough space %d",errno);
++		abort();
++	}
++
++	ctx->done = done;
++	ctx->userdata = userdata;
++
++	cm_thread_t thread_id;
++	cm_thread_create(&thread_id, &cmm_manager_obj_new_thread,
++			 ctx, CM_THREAD_CREATE_DETACHED, &err);
++	if (CM_ERR_NONE != err) {
++		err |= CM_ERR_MMANAGER_NEW;
++		goto out_freectx;
++	}
++	return;
++out_freectx:
++	free(ctx);
++	done(NULL, userdata, err);
++}
++
+ #if 0
+ struct cm_manager_list_for_each_ctx {
+ 	struct cm_manager *self;
+diff --git a/common/cm_object.c b/common/cm_object.c
+index f8e2716..917d57f 100644
+--- a/common/cm_object.c
++++ b/common/cm_object.c
+@@ -318,9 +318,9 @@ void cm_set_for_each(struct cm_set *self,
+ }
+ 
+ void cm_set_for_each_safe(struct cm_set *self,
+-		     void (*for_each)(struct cm_object *cmobj,
+-				      void *userdata),
+-		     void *userdata)
++			  void (*for_each)(struct cm_object *cmobj,
++					   void *userdata),
++			  void *userdata)
+ {
+ 	assert(self && for_each);
+ 	struct cm_object *cmobj = NULL, *next = NULL;
+diff --git a/tests/cm-manager/Makefile b/tests/cm-manager/Makefile
+index 40b4174..300f95f 100644
+--- a/tests/cm-manager/Makefile
++++ b/tests/cm-manager/Makefile
+@@ -14,11 +14,16 @@ endif
+ .PHONY: all clean
+ 
+ CM_MANAGER_TESTBIN=cm_manager
++CM_MANAGER_ASYNC_TESTBIN=cm_manager_async
+ 
+-all: $(CM_MANAGER_TESTBIN) 
++all: $(CM_MANAGER_TESTBIN) $(CM_MANAGER_ASYNC_TESTBIN) 
+ 
+ $(CM_MANAGER_TESTBIN):
+-	$(CC) $(CM_MANAGER_TESTBIN).c -o $@ $(CFLAGS) $(INCLUDE) -L $(CMMANAGER_LIBDIR) -lcm-manager -Wl,-rpath,$(CMMANAGER_LIBDIR) 
++	$(CC) $(CM_MANAGER_TESTBIN).c -o $@ $(CFLAGS) $(INCLUDE) -L $(CMMANAGER_LIBDIR) -lcm-manager -Wl,-rpath,$(CMMANAGER_LIBDIR)
++
++$(CM_MANAGER_ASYNC_TESTBIN):
++	$(CC) $(CM_MANAGER_ASYNC_TESTBIN).c -o $@ $(CFLAGS) $(INCLUDE) -L $(CMMANAGER_LIBDIR) -lcm-manager -Wl,-rpath,$(CMMANAGER_LIBDIR) 
++
+ 
+ clean:
+-	rm -f $(CM_MANAGER_TESTBIN) ./*.d
++	rm -f $(CM_MANAGER_TESTBIN) $(CM_MANAGER_ASYNC_TESTBIN) ./*.d
+diff --git a/tests/cmm-manager/Makefile b/tests/cmm-manager/Makefile
+index 0ad2fd2..a2598b4 100644
+--- a/tests/cmm-manager/Makefile
++++ b/tests/cmm-manager/Makefile
+@@ -15,10 +15,13 @@ endif
+ 
+ CMM_MANAGER_TESTBIN=cmm_manager
+ 
+-all: $(CMM_MANAGER_TESTBIN) 
++all: $(CMM_MANAGER_TESTBIN) $(CMM_MANAGER_ASYNC_TESTBIN)
+ 
+ $(CMM_MANAGER_TESTBIN):
+ 	$(CC) $(CMM_MANAGER_TESTBIN).c -o $@ $(CFLAGS) $(INCLUDE) -L $(CMMMANAGER_LIBDIR) -lcmm-manager -Wl,-rpath,$(CMMMANAGER_LIBDIR) 
+ 
++$(CMM_MANAGER_ASYNC_TESTBIN):
++	$(CC) $(CMM_MANAGER_ASYNC_TESTBIN).c -o $@ $(CFLAGS) $(INCLUDE) -L $(CMMMANAGER_LIBDIR) -lcmm-manager -Wl,-rpath,$(CMMMANAGER_LIBDIR) -lpthread 
++
+ clean:
+-	rm -f $(CMM_MANAGER_TESTBIN) ./*.d
++	rm -f $(CMM_MANAGER_TESTBIN) $(CMM_MANAGER_ASYNC_TESTBIN) ./*.d
+diff --git a/tests/cmm-manager/cmm_manager.c b/tests/cmm-manager/cmm_manager.c
+index cbb0d80..ab70ce2 100644
+--- a/tests/cmm-manager/cmm_manager.c
++++ b/tests/cmm-manager/cmm_manager.c
+@@ -1,6 +1,5 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+-#include <pthread.h>
+ #include "libcmm-manager.h"
+ 
+ int main()
+@@ -16,5 +15,4 @@ int main()
+ 	printf("Succesfully created CMMManager: %s\n Winding down\n", path);
+ 	cmm_manager_unref(manager);
+ 	free(path);
+-	pthread_exit(0);
+ }

@@ -11,7 +11,7 @@
 #include "cm_manager_obj.h"
 #include "cm_modem.h"
 
-#define	CLASS_NAME		"CMManager"
+#define	CMMANGER_CLASS_NAME		"CMManager"
 /* @tbd: Should CMManeger be singleton */
 //@todo: revisit unloading logic and semaphore logic
 static sem_t mutex;
@@ -19,23 +19,18 @@ static sem_t mutex;
 __attribute__((constructor)) void cm_manager_obj_constructor(void)
 {
 	sem_init(&mutex, 0, 1);
-	cm_debug("Loading: %s", CLASS_NAME);
+	cm_debug("Loading: %s", CMMANGER_CLASS_NAME);
 }
 __attribute__((destructor)) void cm_manager_obj_destructor(void)
 {
-	int err = 0;
-	sem_trywait(&mutex);
-	if (0 != (err = errno)) {
-		cm_warn("Could not decrement semaphore required to unload \
-			CMManager module, bugging out %d", err);
-	}
-	cm_debug("Unloading: %s", CLASS_NAME);
+	sem_wait(&mutex);
+	cm_debug("Unloading: %s", CMMANGER_CLASS_NAME);
 	sem_destroy(&mutex);
 }
 
 static const char * cm_manager_obj_get_class_name(void)
 {
-	return CLASS_NAME;
+	return CMMANGER_CLASS_NAME;
 }
 
 static void cm_manager_obj_for_each_modem_get(struct cm_object *modemobj,
@@ -62,7 +57,7 @@ static void cm_manager_obj_for_each_modem_put(struct cm_object *modemobj,
 					     void *userdata)
 {
 	assert(modemobj);
-	/* @todo: change this cm_modem_get once implemented in modem */
+	/* @todo: change this cm_modem_put once implemented in modem */
 	cm_object_put(modemobj);
 }
 
@@ -75,7 +70,59 @@ static void cm_manager_obj_put(struct cm_manager *self)
 	cm_set_put(self->priv->modems);
 	cm_object_put(&self->cmobj);
 }
+#if 0
+//@todo need new and free methods for ctx
+struct cm_manager_put_ctx {
+	struct cm_manager *self;
+	cm_manager_put_done done;
+	void *userdata;
+};
 
+static void * cm_manager_obj_put_thread(void *userdata)
+{
+	cm_err_t err = CM_ERR_NONE;
+	struct cm_manager *self = NULL;
+	struct cm_manager_put_ctx * ctx = NULL;
+
+	ctx = (struct cm_manager_put_ctx *)userdata;
+	assert(ctx && ctx->self && ctx->done);
+
+	cm_manager_obj_put(self);
+	ctx->done(ctx->userdata, err);
+	free(ctx);
+	return NULL;
+}
+
+void cm_manager_obj_put_async(struct cm_module *owner,
+			      cm_manager_put_done done,
+			      void *userdata)
+{
+	cm_err_t err = CM_ERR_NONE;
+
+	assert(done);
+	struct cm_manager_put_ctx *ctx =
+		(struct cm_manager_put_ctx *)calloc(1, sizeof(*ctx));
+	if (!ctx) {
+		cm_error("Unable to allocate enough space %d",errno);
+		abort();
+	}
+
+	ctx->done = done;
+	ctx->userdata = userdata;
+
+	cm_thread_t thread_id;
+	cm_thread_create(&thread_id, &cm_manager_obj_put_thread,
+			 ctx, CM_THREAD_CREATE_DETACHED, &err);
+	if (CM_ERR_NONE != err) {
+		err |= CM_ERR_MANAGER_PUT_ASYNC;
+		goto out_freectx;
+	}
+	return;
+out_freectx:
+	free(ctx);
+	done(userdata, err);
+}
+#endif
 static void cm_manager_obj_start(struct cm_manager *self, cm_err_t *err)
 {
 	assert(self && self->priv && err);
@@ -179,7 +226,7 @@ static void cm_manager_obj_release(struct cm_object *cmobj)
 	}
 }
 
-struct cm_manager * cm_manager_obj_create(struct cm_module *owner,
+static struct cm_manager * cm_manager_obj_create(struct cm_module *owner,
 				       cm_err_t *err)
 {
 	assert(err);
@@ -203,7 +250,7 @@ struct cm_manager * cm_manager_obj_create(struct cm_module *owner,
 					     err, "CMModems");
 	if (CM_ERR_NONE != *err) {
 		cm_error("Error in creating CMModems cmset %d", *err);
-		goto out_unref;
+		goto out_putself;
 	}
 
 	cm_atomic_set(&priv->num_modems, 0);
@@ -224,7 +271,7 @@ struct cm_manager * cm_manager_obj_create(struct cm_module *owner,
 	}
 
 	return self;
-out_unref:
+out_putself:
 	cm_object_put(&self->cmobj);
 	return NULL;
 }
