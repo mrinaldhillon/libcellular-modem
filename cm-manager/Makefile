@@ -26,8 +26,11 @@ COMMON_LIBS=$(COMMON_LIBDIR)/cm_atomic.o \
 	    $(COMMON_LIBDIR)/cm_module.o \
 	    $(COMMON_LIBDIR)/cm_module_loader.o
 
-CMMANAGER_LIBS=$(CMMANAGER_LIBDIR)/cm_manager.o \
-		$(CMMANAGER_LIBDIR)/cm_manager_obj.o
+CMMANAGER_LIBS=	$(CMMANAGER_LIBDIR)/cm_manager_obj_list_modems.o \
+		$(CMMANAGER_LIBDIR)/cm_manager_obj_notify.o \
+		$(CMMANAGER_LIBDIR)/cm_manager_obj.o \
+		$(CMMANAGER_LIBDIR)/cm_manager.o
+
 
 LIB_CMMANAGER=libcm-manager.so
 

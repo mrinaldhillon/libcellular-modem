@@ -1,7 +1,23 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <assert.h>
 #include "libcm-manager.h"
+
+static void cm_manager_list_modems_for_each_ready(struct cm_manager *manager,
+						  struct cm_modem *modem,
+						  void *userdata)
+{
+	assert(manager && modem);
+}
+
+static void cm_manager_list_modems_done_ready(struct cm_manager *manager,
+						  void *userdata,
+						  cm_err_t err)
+{
+	assert(manager);
+	printf("Listing modems done with err %d", err);
+}
 
 void cm_manager_new_ready(struct cm_manager *manager,
 			  void *userdata,
@@ -16,8 +32,10 @@ void cm_manager_new_ready(struct cm_manager *manager,
 
 	path = cm_manager_get_path(manager);
 	printf("Succesfully created cm manager %s\n", path);
-	cm_manager_start(manager, &err);
-	cm_manager_stop(manager, &err);
+	cm_manager_list_modems_async(manager,
+				     &cm_manager_list_modems_for_each_ready,
+				     &cm_manager_list_modems_done_ready,
+				     "MYDATA");
 	printf("Winding down\n");
 	free(path);
 }
