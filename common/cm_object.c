@@ -104,7 +104,7 @@ static void cm_object_add_vargs(struct cm_object *self,
 	// if !parent && cmobj->cmset then cmset is parent of cmobj
 	if (cmset) {
 		if (!parent)
-			self->parent = cm_object_get(&self->cmset->cmobj);
+			self->parent = cm_object_get(&cmset->cmobj);
 		self->cmset = cmset;
 		cm_object_join_cm_set(self);
 	}

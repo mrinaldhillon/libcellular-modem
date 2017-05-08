@@ -51,23 +51,86 @@ static struct cmm_manager * cmm_manager_obj_get(struct cmm_manager *self)
 	return self;
 }
 
-static void cmm_manager_obj_for_each_cmm_put(struct cm_object *cmmobj,
-					     void *userdata)
+struct cmm_manager_obj_put_ctx {
+	struct cmm_manager *cmmm;
+	struct cm_set *thread_ctxset;
+	cm_err_t err;
+};
+
+static void
+cmm_manager_obj_for_each_cmm_put_thread(struct cm_thread_ctx *thread_ctx)
 {
-	assert(cmmobj);
-	/* @todo: change this cm_modem_get once implemented in modem */
+	assert(thread_ctx);
+	struct cm_object *cmmobj = (struct cm_object *)thread_ctx->args;
 	struct cm_manager *cmm = to_cm_manager(cmmobj);
 	cmm->put(cmm);
+
+	// balancing ref
+	cm_object_put(cmmobj);
+}
+
+static void cmm_manager_obj_for_each_cmm_put(struct cm_object *cmmobj,
+					      void *userdata)
+{
+	assert(cmmobj);
+	cm_err_t err = CM_ERR_NONE;
+	struct cmm_manager_obj_put_ctx *put_ctx =
+		(struct cmm_manager_obj_put_ctx *)userdata;
+	assert(put_ctx && put_ctx->cmmm && put_ctx->thread_ctxset);
+
+	struct cm_thread_ctx *thread_ctx = cm_thread_ctx_new();
+	// increase ref of object before pushing into thread ctx
+	thread_ctx->args = cm_object_get(cmmobj);
+	thread_ctx->start_routine = &cmm_manager_obj_for_each_cmm_put_thread;
+	cm_thread_ctx_add_and_create_joinable_thread(thread_ctx, NULL,
+						     put_ctx->thread_ctxset,
+						     &err);
+	if (CM_ERR_NONE != err) {
+		cm_warn("Could not create joinable thread %d", err);
+		goto out_putmodem;
+	}
+	goto out_putthread_ctx;
+
+out_putmodem:
+	cm_warn("Error in put cmm object in joinable thread, \
+		doing serialized put");
+	// balacing ref
+	cm_object_put(cmmobj);
+	// actual put serialized since thread creation failed
+	struct cm_manager *cmm = to_cm_manager(cmmobj);
+	cmm->put(cmm);
+out_putthread_ctx:
+	cm_object_put(&thread_ctx->cmobj);
 }
 
 static void cmm_manager_obj_put(struct cmm_manager *self)
 {
 	assert(self && self->priv);
+	cm_err_t err = CM_ERR_NONE;
+	struct cmm_manager_obj_put_ctx *put_ctx =
+		(struct cmm_manager_obj_put_ctx *)calloc(1, sizeof(*put_ctx));
+	if (!put_ctx) {
+		cm_error("Unable to allocate enough memory %d", errno);
+		abort();
+	}
+	put_ctx->cmmm = self;
+	put_ctx->thread_ctxset = cm_set_create();
+	cm_object_set_name(&put_ctx->thread_ctxset->cmobj, "CMMManagerThreads");
+
 	cm_set_for_each_safe(self->priv->cmmset,
 			     &cmm_manager_obj_for_each_cmm_put,
-			     self);
+			     put_ctx);
+
+	cm_thread_ctx_join_threads_and_del(put_ctx->thread_ctxset, &err);
+	if (CM_ERR_NONE != err) {
+		cm_warn("Could not join some/all threads to put modems, \
+			this will result in memory leaks!!! %d", err);
+	}
+
+	cm_object_put(&put_ctx->thread_ctxset->cmobj);
 	cm_set_put(self->priv->cmmset);
 	cm_object_put(&self->cmobj);
+	free(put_ctx);
 }
 
 void cmm_manager_obj_start(struct cmm_manager *self, cm_err_t *err)
