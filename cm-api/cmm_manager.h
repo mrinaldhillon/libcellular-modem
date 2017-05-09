@@ -8,6 +8,9 @@ struct cmm_manager;
 
 struct cmm_manager * cmm_manager_new(cm_err_t *err);
 
+void cmm_manager_new_async(cmm_manager_new_done done,
+			   void *userdata);
+
 struct cmm_manager * cmm_manager_ref(struct cmm_manager *self);
 
 void cmm_manager_unref(struct cmm_manager *self);

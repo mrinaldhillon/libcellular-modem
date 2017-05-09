@@ -1,6 +1,7 @@
 #ifndef _CM_BEARER_IP_CONFIG_H_
 #define _CM_BEARER_IP_CONFIG_H_
 
+#include "cm_ip_type.h"
 /*
  * Ip config is not live object, hence once accessed discard it and
  * fetch the object from cm_bearer for subsequent accesses.

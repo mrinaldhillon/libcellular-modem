@@ -8,18 +8,130 @@
 #include "cm_container_of.h"
 #include "cm_atomic.h"
 #include "cm_object.h"
-#include "cmm_manager_priv.h"
-#include "cmm_manager_obj.h"
 #include "cm_module.h"
 #include "cm_module_loader.h"
+#include "cm_thread.h"
 #include "cm_modem.h"
+#include "cmm_manager_priv.h"
+#include "cmm_manager_obj.h"
 #include "cm_manager_obj.h"
+
+
+#define	CMMMANGER_CLASS_NAME		"CMMManager"
 
 #if !defined(CMM_MANAGER_LIBDIR)
 #define CMM_MANAGER_LIBDIR		"/usr/lib/cmm-manager"
 #endif /* !defined CMM_MANAGER_LIBDIR */
 
 /* @tbd: Should CMMManeger be singleton */
+
+static const char * cmm_manager_obj_get_class_name(void)
+{
+	return CMMMANGER_CLASS_NAME;
+}
+
+static void cmm_manager_obj_for_each_cmm_get(struct cm_object *cmmobj,
+					     void *userdata)
+{
+	assert(cmmobj);
+	/* @todo: change this cm_modem_get once implemented in modem */
+	struct cm_manager *cmm = to_cm_manager(cmmobj);
+	cmm->get(cmm);
+}
+
+static struct cmm_manager * cmm_manager_obj_get(struct cmm_manager *self)
+{
+	assert(self && self->priv);
+	cm_object_get(&self->cmobj);
+	cm_set_get(self->priv->cmmset);
+	cm_set_for_each_safe(self->priv->cmmset,
+			     &cmm_manager_obj_for_each_cmm_get,
+			     self);
+
+	return self;
+}
+
+struct cmm_manager_obj_put_ctx {
+	struct cmm_manager *cmmm;
+	struct cm_set *thread_ctxset;
+	cm_err_t err;
+};
+
+static void
+cmm_manager_obj_for_each_cmm_put_thread(struct cm_thread_ctx *thread_ctx)
+{
+	assert(thread_ctx);
+	struct cm_object *cmmobj = (struct cm_object *)thread_ctx->args;
+	struct cm_manager *cmm = to_cm_manager(cmmobj);
+	cmm->put(cmm);
+
+	// balancing ref
+	cm_object_put(cmmobj);
+}
+
+static void cmm_manager_obj_for_each_cmm_put(struct cm_object *cmmobj,
+					      void *userdata)
+{
+	assert(cmmobj);
+	cm_err_t err = CM_ERR_NONE;
+	struct cmm_manager_obj_put_ctx *put_ctx =
+		(struct cmm_manager_obj_put_ctx *)userdata;
+	assert(put_ctx && put_ctx->cmmm && put_ctx->thread_ctxset);
+
+	struct cm_thread_ctx *thread_ctx = cm_thread_ctx_new();
+	// increase ref of object before pushing into thread ctx
+	thread_ctx->args = cm_object_get(cmmobj);
+	thread_ctx->start_routine = &cmm_manager_obj_for_each_cmm_put_thread;
+	cm_thread_ctx_add_and_create_joinable_thread(thread_ctx, NULL,
+						     put_ctx->thread_ctxset,
+						     &err);
+	if (CM_ERR_NONE != err) {
+		cm_warn("Could not create joinable thread %d", err);
+		goto out_putmodem;
+	}
+	goto out_putthread_ctx;
+
+out_putmodem:
+	cm_warn("Error in put cmm object in joinable thread, \
+		doing serialized put");
+	// balacing ref
+	cm_object_put(cmmobj);
+	// actual put serialized since thread creation failed
+	struct cm_manager *cmm = to_cm_manager(cmmobj);
+	cmm->put(cmm);
+out_putthread_ctx:
+	cm_object_put(&thread_ctx->cmobj);
+}
+
+static void cmm_manager_obj_put(struct cmm_manager *self)
+{
+	assert(self && self->priv);
+	cm_err_t err = CM_ERR_NONE;
+	struct cmm_manager_obj_put_ctx *put_ctx =
+		(struct cmm_manager_obj_put_ctx *)calloc(1, sizeof(*put_ctx));
+	if (!put_ctx) {
+		cm_error("Unable to allocate enough memory %d", errno);
+		abort();
+	}
+	put_ctx->cmmm = self;
+	put_ctx->thread_ctxset = cm_set_create();
+	cm_object_set_name(&put_ctx->thread_ctxset->cmobj, "CMMManagerThreads");
+
+	cm_set_for_each_safe(self->priv->cmmset,
+			     &cmm_manager_obj_for_each_cmm_put,
+			     put_ctx);
+
+	cm_thread_ctx_join_threads_and_del(put_ctx->thread_ctxset, &err);
+	if (CM_ERR_NONE != err) {
+		cm_warn("Could not join some/all threads to put modems, \
+			this will result in memory leaks!!! %d", err);
+	}
+
+	cm_object_put(&put_ctx->thread_ctxset->cmobj);
+	cm_set_put(self->priv->cmmset);
+	cm_object_put(&self->cmobj);
+	free(put_ctx);
+}
 
 void cmm_manager_obj_start(struct cmm_manager *self, cm_err_t *err)
 {
@@ -98,30 +210,6 @@ static void cmm_manager_obj_unsubscribe_modem_removed(struct cmm_manager *self,
 {
 	assert(self && self->priv && err);
 	// from each manager
-}
-
-static void cmm_manager_release_for_each_cmm(struct cm_object *cmmobj,
-					     void *userdata)
-{
-	assert(cmmobj);
-	struct cmm_manager *self = (struct cmm_manager *)userdata;
-	struct cm_manager *cmm = to_cm_manager(cmmobj);
-	cmm->cleanup(cmm);
-	cm_object_del(cmmobj);
-	cm_object_put(cmmobj);
-	cm_atomic_dec(&self->priv->num_cmm);
-}
-
-static void cmm_manager_obj_cleanup(struct cmm_manager *self)
-{
-	assert(self && self->priv);
-	cm_set_for_each_safe(self->priv->cmmset,
-			     &cmm_manager_release_for_each_cmm,
-			     self);
-	assert(0 == cm_atomic_read(&self->priv->num_cmm));
-	cm_debug("CMMManager cleanup done");
-	cm_set_del(self->priv->cmmset);
-	cm_set_put(self->priv->cmmset);
 }
 
 static void cmm_manager_obj_release(struct cm_object *cmobj)
@@ -216,7 +304,7 @@ static void cmm_manager_obj_load_modules_done(void *userdata,
 		 cm_atomic_read(&self->priv->num_cmm), err);
 }
 
-struct cmm_manager * cmm_manager_obj_new(cm_err_t *err)
+struct cmm_manager * cmm_manager_obj_create(cm_err_t *err)
 {
 	assert(err);
 	struct cmm_manager_priv *priv =
@@ -241,19 +329,20 @@ struct cmm_manager * cmm_manager_obj_new(cm_err_t *err)
 					     "CMManagers");
 	if (CM_ERR_NONE != *err) {
 		cm_error("Error in creating CMManagers set %d", *err);
-		goto out_unref;
+		goto out_putself;
 	}
 
 	cm_atomic_set(&priv->num_cmm, 0);
 	self->priv = priv;
-
-	self->cleanup = &cmm_manager_obj_cleanup;
+	self->get = &cmm_manager_obj_get;
+	self->put = &cmm_manager_obj_put;
 	self->start = &cmm_manager_obj_start;
 	self->start_async = &cmm_manager_obj_start_async;
 	self->stop = &cmm_manager_obj_stop;
 	self->stop_async = &cmm_manager_obj_stop_async;
 	self->list_modems = &cmm_manager_obj_list_modems;
 	self->list_modems_async = &cmm_manager_obj_list_modems_async;
+	self->get_class_name = &cmm_manager_obj_get_class_name;
 
 	cm_module_loader_load_from_dirpath(CMM_MANAGER_LIBDIR, 1,
 					&cmm_manager_obj_for_each_module_loaded,
@@ -261,14 +350,76 @@ struct cmm_manager * cmm_manager_obj_new(cm_err_t *err)
 					self, err);
 	if (CM_ERR_NONE != *err) {
 		cm_error("Could not load cmm manager modules %d", *err);
-		goto out_unref;
+		goto out_putcmset;
 	}
 	return self;
 
-out_unref:
-	cmm_manager_obj_cleanup(self);
+out_putcmset:
+	cm_set_put(priv->cmmset);
+out_putself:
 	cm_object_put(&self->cmobj);
 	return NULL;
+}
+
+
+struct cmm_manager * cmm_manager_obj_new(cm_err_t *err)
+{
+	return cmm_manager_obj_create(err);
+}
+
+//@todo need new and free methods for ctx
+struct cmm_manager_new_ctx {
+	struct cm_module *owner;
+	cmm_manager_new_done done;
+	void *userdata;
+};
+
+static void * cmm_manager_obj_new_thread(void *userdata)
+{
+	cm_err_t err = CM_ERR_NONE;
+	struct cmm_manager *self = NULL;
+	struct cmm_manager_new_ctx * ctx = NULL;
+
+	ctx = (struct cmm_manager_new_ctx *)userdata;
+	assert(ctx && ctx->done);
+
+	self = cmm_manager_obj_create(&err);
+	ctx->done(self, ctx->userdata, err);
+	/* remove the reference since callee may have take one
+	 * else this object will be released*/
+	if (self)
+		cmm_manager_obj_put(self);
+	free(ctx);
+	return NULL;
+}
+
+void cmm_manager_obj_new_async(cmm_manager_new_done done,
+			      void *userdata)
+{
+	cm_err_t err = CM_ERR_NONE;
+
+	assert(done);
+	struct cmm_manager_new_ctx *ctx =
+		(struct cmm_manager_new_ctx *)calloc(1, sizeof(*ctx));
+	if (!ctx) {
+		cm_error("Unable to allocate enough space %d",errno);
+		abort();
+	}
+
+	ctx->done = done;
+	ctx->userdata = userdata;
+
+	cm_thread_t thread_id;
+	cm_thread_create(&thread_id, &cmm_manager_obj_new_thread,
+			 ctx, CM_THREAD_CREATE_DETACHED, &err);
+	if (CM_ERR_NONE != err) {
+		err |= CM_ERR_MMANAGER_NEW;
+		goto out_freectx;
+	}
+	return;
+out_freectx:
+	free(ctx);
+	done(NULL, userdata, err);
 }
 
 #if 0

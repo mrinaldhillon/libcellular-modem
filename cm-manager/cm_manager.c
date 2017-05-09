@@ -9,24 +9,22 @@ struct cm_manager * cm_manager_new(cm_err_t *err)
 	return cm_manager_obj_new(NULL, err);
 }
 
+void cm_manager_new_async(cm_manager_new_done done,
+					void *userdata)
+{
+	cm_manager_obj_new_async(NULL, done, userdata);
+}
+
 struct cm_manager * cm_manager_ref(struct cm_manager *self)
 {
 	assert(self);
-	cm_object_get(&self->cmobj);
-	return self;
+	return self->get(self);
 }
 
 void cm_manager_unref(struct cm_manager *self)
 {
 	assert(self);
-	cm_object_put(&self->cmobj);
-}
-
-void cm_manager_destroy(struct cm_manager *self)
-{
-	assert(self);
-	self->cleanup(self);
-	cm_object_put(&self->cmobj);
+	self->put(self);
 }
 
 char * cm_manager_get_path(struct cm_manager *self)

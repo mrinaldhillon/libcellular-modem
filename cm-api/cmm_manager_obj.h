@@ -12,8 +12,11 @@ struct cmm_manager {
 	struct cm_object cmobj;
 	struct cmm_manager_priv *priv;
 
-	/* needed before final unref */
-	void (*cleanup)(struct cmm_manager *self);
+	const char *(*get_class_name)(void);
+
+	struct cmm_manager *(*get)(struct cmm_manager *self);
+
+	void (*put)(struct cmm_manager *self);
 
 	void (*start)(struct cmm_manager *self, cm_err_t *err);
 
@@ -60,11 +63,8 @@ static inline struct cmm_manager * to_cmm_manager(struct cm_object *cmobj)
 }
 
 struct cmm_manager * cmm_manager_obj_new(cm_err_t *err);
-#if 0
-#if !defined(_CMM_MANAGER_H_)
 
-#define cmm_manager_new		cmm_manager_obj_new
-#endif /* !defined(_CMM_MANAGER_H_) */
-#endif
+void cmm_manager_obj_new_async(cmm_manager_new_done done,
+			       void *userdata);
 
 #endif /* _CMM_MANAGER_OBJ_H_ */

@@ -1,5 +1,5 @@
-#ifndef _CM_MODEM_
-#define _CM_MODEM_
+#ifndef _CM_MODEM_H_
+#define _CM_MODEM_H_
 
 #include "cm_err.h"
 #include "cm_modem_state.h"
@@ -8,57 +8,9 @@
 #include "cm_bearer_properties.h"
 #include "cm_sim.h"
 #include "cm_messaging.h"
+#include "cm_modem_clbk_defs.h"
 
 struct cm_modem;
-
-typedef void (*cm_modem_enable_done)(struct cm_modem *self,
-				     void *userdata,
-				     cm_err_t err);
-
-typedef void (*cm_modem_disable_done)(struct cm_modem *self,
-				      void *userdata,
-				      cm_err_t err);
-
-typedef void (*cm_modem_connect_done)(struct cm_modem *self,
-				      void *userdata,
-				      cm_err_t err);
-
-typedef void (*cm_modem_disconnect_done)(struct cm_modem *self,
-					 void *userdata,
-					 cm_err_t err);
-
-typedef void (*cm_modem_get_state_done)(struct cm_modem *self,
-					cm_modem_state_t state,
-					void *userdata,
-					cm_err_t err);
-
-typedef void (*cm_modem_get_signal_done)(struct cm_modem *self,
-					 struct cm_signal *signal,
-					 void *userdata,
-					 cm_err_t err);
-
-typedef void (*cm_modem_create_bearer_done)(struct cm_modem *self,
-					    struct cm_bearer *bearer,
-					    void *userdata,
-					    cm_err_t err);
-
-typedef void (*cm_modem_list_bearers_for_each)(struct cm_modem *self,
-					       struct cm_bearer *bearer,
-					       void *userdata);
-
-typedef void (*cm_modem_list_bearers_done)(struct cm_modem *self,
-					   void *userdata,
-					   cm_err_t err);
-
-typedef void (*cm_modem_state_updated)(struct cm_modem *self,
-				       cm_modem_state_t state,
-				       void *userdata,
-				       cm_err_t err);
-
-typedef void (*cm_modem_signal_updated)(struct cm_modem *self,
-					struct cm_signal *signal,
-					void *userdata,
-					cm_err_t err);
 
 struct cm_modem * cm_modem_ref(struct cm_modem *self);
 
@@ -67,7 +19,7 @@ void cm_modem_unref(struct cm_modem *self);
 /*
  * /CMManager/CMManagerInfaceName/Modem#
  */
-const char * cm_modem_get_path(struct cm_modem *self);
+char * cm_modem_get_path(struct cm_modem *self);
 
 /*
  * More hardware properties need to be added
@@ -80,6 +32,7 @@ const char * cm_modem_get_serial(struct cm_modem *self);
 
 void cm_modem_enable(struct cm_modem *self,
 		     cm_err_t *err);
+
 void cm_modem_enable_async(struct cm_modem *self,
 			   cm_modem_enable_done done,
 			   void *userdata);
@@ -159,4 +112,4 @@ void cm_modem_subscribe_signal_update(struct cm_modem *self,
 void cm_modem_unsubscribe_signal_updated(struct cm_modem *self,
 					 cm_err_t *err);
 
-#endif /* _CM_MODEM_ */
+#endif /* _CM_MODEM_H_ */

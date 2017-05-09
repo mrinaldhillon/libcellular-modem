@@ -13,6 +13,7 @@ cm_bearer_properties_new(const char *apn,
 			 unsigned int allow_roaming,
 			 const char *number);
 
+// @todo: provide set methods
 struct cm_bearer_properties *
 cm_bearer_properties_ref(struct cm_bearer_properties *self);
 
