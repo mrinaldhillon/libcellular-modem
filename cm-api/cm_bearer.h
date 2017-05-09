@@ -5,63 +5,21 @@
 #include "cm_bearer_properties.h"
 #include "cm_bearer_stats.h"
 #include "cm_bearer_ip_config.h"
+#include "cm_bearer_clbk_defs.h"
 
 struct cm_bearer;
-
-typedef void (*cm_bearer_connect_done)(struct cm_bearer *self,
-			       void *userdata,
-			       cm_err_t err);
-
-typedef void (*cm_bearer_disconnect_done)(struct cm_bearer *self,
-			       void *userdata,
-			       cm_err_t err);
-
-typedef void (*cm_bearer_get_stats_done)(struct cm_bearer *self,
-				 struct cm_bearer_stats *stats,
-				 void *userdata,
-				 cm_err_t err);
-
-typedef void (*cm_bearer_get_ip_config_done)(struct cm_bearer *self,
-				 struct cm_bearer_ip_config *ip_config,
-				 void *userdata,
-				 cm_err_t err);
-
-typedef void (*cm_bearer_get_interface_done)(struct cm_bearer *self,
-				 const char *interface,
-				 void *userdata,
-				 cm_err_t err);
-
-typedef void (*cm_bearer_state_updated)(struct cm_bearer *self,
-				 cm_bearer_state_t state,
-				 void *userdata,
-				 cm_err_t err);
-
-typedef void (*cm_bearer_stats_updated)(struct cm_bearer *self,
-				 struct cm_bearer_stats *stats,
-				 void *userdata,
-				 cm_err_t err);
-
-typedef void (*cm_bearer_ip_config_updated)(struct cm_bearer *self,
-				 struct cm_bearer_ip_config *ip_config,
-				 void *userdata,
-				 cm_err_t err);
-
-typedef void (*cm_bearer_interface_updated)(struct cm_bearer *self,
-				 const char *interface,
-				 void *userdata,
-				 cm_err_t err);
 
 struct cm_bearer * cm_bearer_ref(struct cm_bearer *self);
 
 void cm_bearer_unref(struct cm_bearer *self);
 
-const char * cm_bearer_get_path(struct cm_bearer *self);
+char * cm_bearer_get_path(struct cm_bearer *self);
 
 /*
  * Not sure if this is required, since parent path can be parsed
  * from the bearer path i.e. ../Modem#/Bearer#
  */
-const char * cm_bearer_get_modem_path(struct cm_bearer *self);
+char * cm_bearer_get_modem_path(struct cm_bearer *self);
 
 unsigned int cm_bearer_is_connected(struct cm_bearer *self);
 

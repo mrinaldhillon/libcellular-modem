@@ -4,6 +4,7 @@
 #include "cm_object.h"
 #include "cm_module.h"
 #include "cm_err.h"
+#include "cm_modem_obj.h"
 #include "cm_manager_clbk_defs.h"
 
 struct cm_manager_priv;

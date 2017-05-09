@@ -2,9 +2,9 @@
 #define _CM_MANAGER_CLBK_DEFS_H_
 
 #include "cm_err.h"
-#include "cm_modem.h"
 
 struct cm_manager;
+struct cm_modem;
 
 typedef void (*cm_manager_new_done)(struct cm_manager *manager,
 				    void *userdata,
