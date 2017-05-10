@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <semaphore.h>
+#include <libmm-glib.h>
 #include "cm_thread.h"
 #include "cm_err.h"
 #include "cm_log.h"
@@ -49,6 +50,12 @@ static struct cm_manager * cm_manager_obj_get(struct cm_manager *self)
 	cm_set_for_each_safe(self->priv->modems,
 			     &cm_manager_obj_for_each_modem_get,
 			     self);
+	// @todo is it really needed to be part of ref and unref
+	// since following objects are not part of the hierarchy
+	if (self->priv->modem_manager)
+		g_object_ref(self->priv->modem_manager);
+	if (self->priv->dbus_conn)
+		g_object_ref(self->priv->dbus_conn);
 	return self;
 }
 
@@ -128,6 +135,10 @@ static void cm_manager_obj_put(struct cm_manager *self)
 
 	cm_object_put(&put_ctx->thread_ctxset->cmobj);
 	cm_set_put(self->priv->modems);
+	if (self->priv->modem_manager)
+		g_object_unref(self->priv->modem_manager);
+	if (self->priv->dbus_conn)
+		g_object_unref(self->priv->dbus_conn);
 	cm_object_put(&self->cmobj);
 	free(put_ctx);
 }
@@ -168,12 +179,14 @@ static void cm_manager_obj_release(struct cm_object *cmobj)
 	struct cm_module *owner = self->priv->owner;
 
 	cm_debug("Destroying %s", cm_object_get_name(cmobj));
+
 	free(self->priv);
 	free(self);
 	if (owner) {
 		/* decrement value to 0 in order to block destructor.
 		 * library is unloaded upon relasing owner in release
 		 */
+		cm_debug("Releasing owner");
 		sem_wait(&mutex);
 		cm_object_put(&owner->cmobj);
 		/* Increment value to allow destructor to proceed
@@ -185,8 +198,84 @@ static void cm_manager_obj_release(struct cm_object *cmobj)
 	}
 }
 
+static void cm_manager_init_dbus_connection(struct cm_manager *self,
+					    cm_err_t *err)
+{
+	assert(self && self->priv);
+	GError *gerr = NULL;
+	self->priv->dbus_conn = g_bus_get_sync(G_BUS_TYPE_SYSTEM, NULL, &gerr);
+	if (!self->priv->dbus_conn) {
+		cm_error("Error in getting bus connection %s", gerr->message);
+		*err |= CM_ERR_MANAGER_MM_GET_BUS;
+	}
+	if (gerr)
+		g_error_free(gerr);
+}
+
+static void cm_manager_obj_modem_manager_new(struct cm_manager *self,
+					     cm_err_t *err)
+{
+	assert(self && self->priv && self->priv->dbus_conn);
+	GError *gerr = NULL;
+
+	self->priv->modem_manager =
+		mm_manager_new_sync(self->priv->dbus_conn,
+				    G_DBUS_OBJECT_MANAGER_CLIENT_FLAGS_DO_NOT_AUTO_START,
+				    NULL, &gerr);
+	if (!self->priv->modem_manager) {
+		cm_error("Error in creating ModemManager client %s",
+			 gerr->message);
+		*err |= CM_ERR_MANAGER_MM_CREATE_MODEM_MANAGER;
+	}
+
+	if (gerr)
+		g_error_free(gerr);
+}
+
+static void cm_manager_obj_populate_modems(struct cm_manager *self,
+					   cm_err_t *err)
+{
+	assert(self && self->priv && self->priv->modem_manager
+	       && err);
+	GList *modems = NULL, *each = NULL;
+	modems =
+	g_dbus_object_manager_get_objects(G_DBUS_OBJECT_MANAGER(self->priv->
+								modem_manager));
+	for (each = modems; each; each = g_list_next(each)) {
+	// list from each manager
+		cm_info("%s", mm_object_get_path(MM_OBJECT(each->data)));
+		g_object_unref(MM_OBJECT(each->data));
+	}
+	g_list_free(modems);
+}
+
+static void cm_manager_obj_init_modem_manager(struct cm_manager *self,
+					      cm_err_t *err)
+{
+	assert(self && self->priv);
+
+	cm_manager_init_dbus_connection(self, err);
+	if (CM_ERR_NONE != *err) {
+		cm_error("Error in initializing dbus connection %d", *err);
+		return;
+	}
+
+	cm_manager_obj_modem_manager_new(self, err);
+	if (CM_ERR_NONE != *err) {
+		cm_error("Error in creating ModemManager %d", *err);
+		goto out_dbusunref;
+	}
+
+	cm_manager_obj_populate_modems(self, err);
+	return;
+
+out_dbusunref:
+	g_object_unref(self->priv->dbus_conn);
+
+}
+
 struct cm_manager * cm_manager_obj_new(struct cm_module *owner,
-				       cm_err_t *err)
+						 cm_err_t *err)
 {
 	assert(err);
 	struct cm_manager_priv *priv =
@@ -223,6 +312,14 @@ struct cm_manager * cm_manager_obj_new(struct cm_module *owner,
 	self->list_modems = &cm_manager_obj_list_modems;
 	self->list_modems_async = &cm_manager_obj_list_modems_async;
 	self->get_class_name = &cm_manager_obj_get_class_name;
+
+
+	cm_manager_obj_init_modem_manager(self, err);
+	if (CM_ERR_NONE != *err) {
+		cm_error("Error in initalizing ModemManager, \
+			 destroying CMManager %d", *err);
+		goto out_putself;
+	}
 
 	if (owner) {
 		cm_object_get(&owner->cmobj);
@@ -274,7 +371,7 @@ void cm_manager_obj_new_async(struct cm_module *owner,
 		cm_error("Unable to allocate enough space %d",errno);
 		abort();
 	}
-	// @todo may need to increase owner's ref
+
 	ctx->owner = owner;
 	ctx->done = done;
 	ctx->userdata = userdata;
@@ -297,6 +394,7 @@ out_freectx:
  * 2. struct cm_manager *manager = dlsym symbol
  * @todo 1 step should be sufficient. This is cm_module_loader api issue to keep
  * it independent of specific type to load.
+ * @todo: add flag to return symbol for sync or async
  */
 const char * cm_get_module_entry_symbol(void)
 {

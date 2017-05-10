@@ -21,6 +21,7 @@ static void cm_manager_obj_list_modems_for_each(struct cm_object *modemobj,
 						void *userdata)
 {
 	assert(modemobj);
+	cm_debug("In list modem");
 #if 0
 	struct cm_manager *self = NULL;
 	struct cm_manager_list_modems_ctx *ctx = NULL;
@@ -81,8 +82,8 @@ static void * cm_manager_obj_list_modems_thread(void *userdata)
 
 	free(ctx);
 	// balance ref taken before creating thread
-//	cm_object_put(&self->cmobj);
 	self->put(self);
+	//cm_object_put(&self->cmobj);
 	return NULL;
 }
 
@@ -93,7 +94,7 @@ void cm_manager_obj_list_modems_async(struct cm_manager *self,
 {
 	cm_err_t err = CM_ERR_NONE;
 
-	assert(self && self->priv && for_each && done);
+	assert(self && self->priv && self->priv->modems && for_each && done);
 	struct cm_manager_list_modems_async_ctx *ctx =
 		(struct cm_manager_list_modems_async_ctx *)
 		calloc(1, sizeof(*ctx));
@@ -108,8 +109,8 @@ void cm_manager_obj_list_modems_async(struct cm_manager *self,
 	ctx->done = done;
 	ctx->userdata = userdata;
 	// increment ref before async call
-	self->get(self);
 //	cm_object_get(&self->cmobj);
+	self->get(self);
 
 	cm_thread_t thread_id;
 	cm_thread_create(&thread_id, &cm_manager_obj_list_modems_thread,
@@ -122,7 +123,8 @@ void cm_manager_obj_list_modems_async(struct cm_manager *self,
 out_freectx:
 	free(ctx);
 	// balance ref
-	cm_object_put(&self->cmobj);
+//	cm_object_put(&self->cmobj);
+	self->put(self);
 	//@todo: this kind of mechanism may confuse developer of client lib
 	// consider return error from this function if failure before
 	// creating a new thread
