@@ -50,6 +50,33 @@ static struct cm_modem * cm_modem_obj_get(struct cm_modem *self)
 	return self;
 }
 
+static void cm_modem_obj_for_each_modem_put(struct cm_object *bearerobj,
+					      void *userdata)
+{
+	assert(bearerobj);
+	/* @todo: change this cm_modem_get once implemented in modem */
+	cm_object_get(bearerobj);
+}
+
+static void cm_modem_obj_put(struct cm_modem *self)
+{
+	assert(self && self->priv);
+	cm_set_for_each_safe(self->priv->bearers,
+			     &cm_modem_obj_for_each_modem_get,
+			     self);
+	cm_set_put(self->priv->bearers);
+
+	if (self->priv->mmobj)
+		g_object_unref(self->priv->mmobj);
+	if (self->priv->mm_modem)
+		g_object_unref(self->priv->mm_modem);
+	if(self->priv->mm_modem_signal)
+		g_object_unref(self->priv->mm_modem_signal);
+
+	cm_object_put(&self->cmobj);
+}
+
+#if 0
 struct cm_modem_obj_put_ctx {
 	struct cm_modem *cmm;
 	struct cm_set *thread_ctxset;
@@ -135,6 +162,8 @@ static void cm_modem_obj_put(struct cm_modem *self)
 	cm_object_put(&self->cmobj);
 	free(put_ctx);
 }
+#endif
+
 static void cm_modem_obj_release(struct cm_object *cmobj)
 {
 	assert(cmobj);

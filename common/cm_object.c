@@ -19,9 +19,10 @@ static void cm_object_release(struct cm_ref *ref)
 	struct cm_object *cmobj = cm_container_of(ref, struct cm_object, ref);
 	if (cmobj->state_added)
 		cm_object_del(cmobj);
+
+	cmobj->state_initialized = 0;
 	if (cmobj->release)
 		cmobj->release(cmobj);
-	cmobj->state_initialized = 0;
 }
 
 static void cm_set_release(struct cm_object *cmobj)
@@ -132,6 +133,7 @@ static void cm_object_leave_cm_set(struct cm_object *cmobj)
 	cm_list_del_init(&cmobj->entry);
 	pthread_mutex_unlock(&cmobj->cmset->lock);
 	cm_set_put(cmobj->cmset);
+	cmobj->cmset = NULL;
 }
 
 void cm_object_del(struct cm_object *self)

@@ -67,6 +67,31 @@ static struct cm_manager * cm_manager_obj_get(struct cm_manager *self)
 	return self;
 }
 
+static void cm_manager_obj_for_each_modem_put(struct cm_object *modemobj,
+					      void *userdata)
+{
+	assert(modemobj);
+	/* @todo: change this cm_modem_get once implemented in modem */
+	struct cm_modem *modem = to_cm_modem(modemobj);
+	modem->put(modem);
+}
+
+void cm_manager_obj_put(struct cm_manager *self)
+{
+	assert(self && self->priv);
+	cm_set_for_each_safe(self->priv->modems,
+			     &cm_manager_obj_for_each_modem_put,
+			     self);
+
+	cm_set_put(self->priv->modems);
+	if (self->priv->modem_manager)
+		g_object_unref(self->priv->modem_manager);
+	if (self->priv->dbus_conn)
+		g_object_unref(self->priv->dbus_conn);
+	cm_object_put(&self->cmobj);
+}
+
+#if 0
 struct cm_manager_obj_put_ctx {
 	struct cm_manager *cmm;
 	struct cm_set *thread_ctxset;
@@ -151,13 +176,12 @@ static void cm_manager_obj_put(struct cm_manager *self)
 	cm_object_put(&self->cmobj);
 	free(put_ctx);
 }
-
+#endif
 static void cm_manager_obj_release(struct cm_object *cmobj)
 {
 	assert(cmobj);
 	struct cm_manager *self = to_cm_manager(cmobj);
 	struct cm_module *owner = self->priv->owner;
-
 	cm_debug("Destroying %s", cm_object_get_name(cmobj));
 
 	free(self->priv);
@@ -217,6 +241,7 @@ static void cm_manager_obj_create_modem(struct cm_manager *self,
 					cm_err_t *err)
 {
 	assert(mmobj);
+	char *path = NULL;
 	struct cm_modem *modem = cm_modem_obj_new(err);
 	if (CM_ERR_NONE != *err) {
 		cm_error("Error in creating new CMModem object %d", *err);
@@ -232,7 +257,11 @@ static void cm_manager_obj_create_modem(struct cm_manager *self,
 	cm_object_add(&modem->cmobj, &self->cmobj, self->priv->modems, err,
 		      "%s-%d", modem->get_class_name(),
 		      cm_atomic_inc_and_read(&self->priv->num_modems));
-	cm_info("CMManager added modem %s", cm_object_get_path(&modem->cmobj));
+
+	path = modem->get_path(modem);
+	cm_info("CMManager added modem %s", path);
+	free(path);
+
 	return;
 out_putmodem:
 	modem->put(modem);
