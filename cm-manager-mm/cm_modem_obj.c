@@ -1,19 +1,26 @@
+#include <stdlib.h>
+#include <assert.h>
+#include <errno.h>
 #include "cm_thread.h"
 #include "cm_err.h"
 #include "cm_log.h"
 #include "cm_object.h"
 #include "cm_atomic.h"
-#include <stdlib.h>
-#include <assert.h>
-#include <errno.h>
 #include "cm_modem_priv.h"
 #include "cm_modem_obj.h"
+#include "cm_manager_mm_internal.h"
 
 #define	CMMODEM_CLASS_NAME		"CMModem"
 
 static const char * cm_modem_obj_get_class_name(void)
 {
 	return CMMODEM_CLASS_NAME;
+}
+
+char * cm_modem_obj_get_path(struct cm_modem *self)
+{
+	assert(self);
+	return cm_object_get_path(&self->cmobj);
 }
 
 static void cm_modem_obj_for_each_modem_get(struct cm_object *bearerobj,
@@ -32,6 +39,14 @@ static struct cm_modem * cm_modem_obj_get(struct cm_modem *self)
 	cm_set_for_each_safe(self->priv->bearers,
 			     &cm_modem_obj_for_each_modem_get,
 			     self);
+
+	if (self->priv->mmobj)
+		g_object_ref(self->priv->mmobj);
+	if (self->priv->mm_modem)
+		g_object_ref(self->priv->mm_modem);
+	if(self->priv->mm_modem_signal)
+		g_object_ref(self->priv->mm_modem_signal);
+
 	return self;
 }
 
@@ -111,6 +126,12 @@ static void cm_modem_obj_put(struct cm_modem *self)
 
 	cm_object_put(&put_ctx->thread_ctxset->cmobj);
 	cm_set_put(self->priv->bearers);
+	if (self->priv->mmobj)
+		g_object_unref(self->priv->mmobj);
+	if (self->priv->mm_modem)
+		g_object_unref(self->priv->mm_modem);
+	if(self->priv->mm_modem_signal)
+		g_object_unref(self->priv->mm_modem_signal);
 	cm_object_put(&self->cmobj);
 	free(put_ctx);
 }
@@ -142,23 +163,16 @@ struct cm_modem * cm_modem_obj_new(cm_err_t *err)
 
 	cm_object_init(&self->cmobj);
 	self->cmobj.release = &cm_modem_obj_release;
+	cm_object_set_name(&self->cmobj, CMMODEM_CLASS_NAME);
 	priv->bearers = cm_set_create_and_add(&self->cmobj, NULL,
 					     err, "CMBearers");
-	if (CM_ERR_NONE != *err) {
-		cm_error("Error in creating CMBearers cmset %d", *err);
-		goto out_putself;
-	}
-
 	cm_atomic_set(&priv->num_bearers, 0);
 	self->priv = priv;
 	self->get = &cm_modem_obj_get;
 	self->put = &cm_modem_obj_put;
 	self->get_class_name = &cm_modem_obj_get_class_name;
-
+	self->get_path = &cm_modem_obj_get_path;
 	return self;
-out_putself:
-	cm_object_put(&self->cmobj);
-	return NULL;
 }
 
 //@todo need new and free methods for ctx
@@ -213,4 +227,15 @@ void cm_modem_obj_new_async(cm_modem_new_done done,
 out_freectx:
 	free(ctx);
 	done(NULL, userdata, err);
+}
+
+void cm_modem_obj_set_mm_modem_object(struct cm_modem *self,
+				      MMObject *mm_modemobj,
+				      cm_err_t *err)
+{
+	assert(self && self->priv && mm_modemobj);
+
+	self->priv->mmobj = g_object_ref(mm_modemobj);
+	self->priv->mm_modem = mm_object_get_modem(mm_modemobj);
+	self->priv->mm_modem_signal = mm_object_get_modem_signal(mm_modemobj);
 }

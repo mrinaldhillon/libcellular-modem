@@ -13,7 +13,9 @@ struct cm_manager {
 	struct cm_object cmobj;
 	struct cm_manager_priv *priv;
 
-	const char *(*get_class_name)(void);
+	const char * (*get_class_name)(void);
+
+	char * (*get_path)(struct cm_manager *self);
 
 	struct cm_manager *(*get)(struct cm_manager *self);
 

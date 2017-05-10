@@ -21,6 +21,7 @@ static void cm_object_release(struct cm_ref *ref)
 		cm_object_del(cmobj);
 	if (cmobj->release)
 		cmobj->release(cmobj);
+	cmobj->state_initialized = 0;
 }
 
 static void cm_set_release(struct cm_object *cmobj)
@@ -35,24 +36,21 @@ static void cm_object_set_name_vargs(struct cm_object *self, const char *fmt,
 {
 	assert(self);
 	if (self->name[0]) {
-		cm_warn("cmobj:%s resetting name not allowed \n", self->name);
-		return;
+		cm_debug("cmobj:%s resetting name", self->name);
+		memset(self->name, 0, CM_OBJECT_MAX_NAME_LEN);
 	}
 
 	vsnprintf(self->name, CM_OBJECT_MAX_NAME_LEN - 1, fmt, vargs);
+	cm_debug("cmobj:%s", self->name);
 }
 
-// foreach
 void cm_object_set_name(struct cm_object *self, const char *fmt, ...)
 {
 	assert(self);
-	if (self->name[0]) {
-		cm_warn("cmobj:%s resetting name not allowed \n", self->name);
-		return;
-	}
+
 	va_list va;
 	va_start(va, fmt);
-	vsnprintf(self->name, CM_OBJECT_MAX_NAME_LEN - 1, fmt, va);
+	cm_object_set_name_vargs(self, fmt, va);
 	va_end(va);
 }
 
@@ -88,22 +86,15 @@ static void cm_object_add_vargs(struct cm_object *self,
 				cm_err_t *err, const char *name_fmt,
 				va_list vargs)
 {
-	assert(self && err);
-	if (1 != self->state_initialized) {
-		cm_error("Cannot add un-initialized cm_obejct");
-		*err |= CM_ERR_EINVAL;
-		return;
-	}
-	// @todo - name setting should be part of init
-	if (!self->name[0]) {
-		cm_object_set_name_vargs(self, name_fmt, vargs);
-	}
+	assert(self && err && 1 == self->state_initialized);
 
-	if (parent)
+	cm_object_set_name_vargs(self, name_fmt, vargs);
+
+	if (!self->parent && parent)
 		self->parent = cm_object_get(parent);
 	// if !parent && cmobj->cmset then cmset is parent of cmobj
 	if (cmset) {
-		if (!parent)
+		if (!self->parent)
 			self->parent = cm_object_get(&cmset->cmobj);
 		self->cmset = cmset;
 		cm_object_join_cm_set(self);
@@ -158,6 +149,9 @@ void cm_object_del(struct cm_object *self)
 struct cm_object * cm_object_get(struct cm_object *self)
 {
 	assert(self && 1 == self->state_initialized);
+	// @tbd: should get always be get unless zero
+	// also wouldn't it be programmer error if trying to take ref on object
+	// with zero ref. Hence should assert on refcount > 0
 	cm_ref_get(&self->ref);
 	return self;
 }
@@ -170,7 +164,7 @@ struct cm_object * cm_object_get_unless_zero(struct cm_object *self)
 
 void cm_object_put(struct cm_object *self)
 {
-	assert(self);
+	assert(self && 1 == self->state_initialized);
 	cm_ref_put(&self->ref, &cm_object_release);
 }
 
@@ -203,17 +197,20 @@ static void cm_object_fill_path(struct cm_object *cmobj, char *path, int len)
 		 path, strlen(path));
 }
 
-char * cm_object_get_path(struct cm_object *cmobj)
+char * cm_object_get_path(struct cm_object *self)
 {
-	assert(cmobj);
+	assert(self);
 	int len = 0;
 	char *path = NULL;
 
-	len = cm_object_get_path_len(cmobj);
+	len = cm_object_get_path_len(self);
 	path = (char *)calloc(len, sizeof(char));
-	if (!path)
-		return NULL;
-	cm_object_fill_path(cmobj, path, len);
+	if (!path) {
+		cm_error("Unable to allocate enough memory %d", errno);
+		abort();
+	}
+
+	cm_object_fill_path(self, path, len);
 	return path;
 }
 
@@ -229,7 +226,7 @@ struct cm_set * cm_set_create(void)
 {
 	struct cm_set *self = (struct cm_set *)calloc(1, sizeof(*self));
 	if (!self) {
-		cm_warn("Unable allocate enough memory %d", errno);
+		cm_error("Unable allocate enough memory %d", errno);
 		abort();
 	}
 	cm_set_init(self);

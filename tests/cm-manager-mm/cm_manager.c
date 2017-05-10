@@ -8,6 +8,9 @@ static void cm_manager_list_modems_for_each_ready(struct cm_manager *manager,
 						  void *userdata)
 {
 	assert(manager && modem);
+	char *path = cm_modem_get_path(modem);
+	printf("Modem Path: %s\n", path);
+	free(path);
 }
 
 int main()

@@ -12,10 +12,14 @@
 #include "cm_messaging.h"
 #include "cm_modem_obj.h"
 #include "cm_modem_clbk_defs.h"
+#include <libmm-glib.h>
 
 struct cm_modem_priv {
 	struct cm_set *bearers;
 	cm_atomic_t num_bearers;
+	MMObject *mmobj;
+	MMModem *mm_modem;
+	MMModemSignal *mm_modem_signal;
 };
 
 const char * cm_modem_obj_get_manufacturer(struct cm_modem *self);
@@ -105,6 +109,5 @@ void cm_modem_obj_subscribe_signal_update(struct cm_modem *self,
 
 void cm_modem_obj_unsubscribe_signal_updated(struct cm_modem *self,
 					 cm_err_t *err);
-
 
 #endif /* _CM_MODEM_PRIV_H_ */

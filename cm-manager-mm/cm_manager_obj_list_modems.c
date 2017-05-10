@@ -8,7 +8,7 @@
 #include "cm_manager_priv.h"
 #include "cm_manager_obj.h"
 #include "cm_manager_clbk_defs.h"
-#include "cm_modem.h"
+#include "cm_modem_obj.h"
 
  //@todo need new and free methods for ctx
 struct cm_manager_list_modems_ctx {
@@ -22,16 +22,14 @@ static void cm_manager_obj_list_modems_for_each(struct cm_object *modemobj,
 {
 	assert(modemobj);
 	cm_debug("In list modem");
-#if 0
-	struct cm_manager *self = NULL;
+
 	struct cm_manager_list_modems_ctx *ctx = NULL;
 	struct cm_modem *modem = cm_container_of(modemobj,
 						 struct cm_modem, cmobj);
 
 	ctx = (struct cm_manager_list_modems_ctx *)userdata;
 	assert(ctx && ctx->self && ctx->for_each);
-	ctx->for_each(self, modem, ctx->userdata);
-#endif
+	ctx->for_each(ctx->self, modem, ctx->userdata);
 }
 
 void cm_manager_obj_list_modems(struct cm_manager *self,

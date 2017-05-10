@@ -78,12 +78,8 @@ struct cm_modem {
 				 cm_modem_connect_done done,
 				 void *userdata);
 
-	struct cm_signal (*get_signal)(struct cm_modem *self,
+	struct cm_signal * (*get_signal)(struct cm_modem *self,
 				       cm_err_t *err);
-
-	struct cm_signal (*get_signal_async)(struct cm_modem *self,
-					     cm_modem_get_signal_done done,
-					     void *userdata);
 
 	struct cm_bearer *
 		(*create_bearer)(struct cm_modem *self,
@@ -95,8 +91,18 @@ struct cm_modem {
 				    cm_modem_create_bearer_done done,
 				    void *userdata);
 
+	void (*delete_bearer)(struct cm_modem *self,
+			      const char *bearer_path,
+			      cm_err_t *err);
+
+	void (*delete_bearer_async)(struct cm_modem *self,
+			      const char *bearer_path,
+			      cm_modem_delete_bearer_done done,
+			      void *userdata);
+
 	void (*list_bearers)(struct cm_modem *self,
 			     cm_modem_list_bearers_for_each for_each,
+			     cm_modem_list_bearers_done done,
 			     void *userdata,
 			     cm_err_t *err);
 
@@ -118,7 +124,7 @@ struct cm_modem {
 					void *userdata,
 					cm_err_t *err);
 
-	void (*unsubscribe_signal_updated)(struct cm_modem *self,
+	void (*unsubscribe_signal_update)(struct cm_modem *self,
 					   cm_err_t *err);
 };
 

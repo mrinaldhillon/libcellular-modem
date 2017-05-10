@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <assert.h>
-#include "cm_log.h"
 #include "libcm-manager.h"
 
 static void cm_manager_list_modems_for_each_ready(struct cm_manager *manager,
@@ -10,6 +9,9 @@ static void cm_manager_list_modems_for_each_ready(struct cm_manager *manager,
 						  void *userdata)
 {
 	assert(manager && modem);
+	char *path = cm_modem_get_path(modem);
+	printf("CMModem path:%s\n", path);
+	free(path);
 }
 
 static void cm_manager_list_modems_done_ready(struct cm_manager *manager,

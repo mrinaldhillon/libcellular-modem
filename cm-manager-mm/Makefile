@@ -2,7 +2,7 @@ include $(TLR_BASE)/build/rds00008.mk
 
 CCAN_DIR=$(TLR_BASE)/lib/ccan
 COMMON_LIBDIR=$(TLR_BASE)/common
-CMMANAGER_LIBDIR=.
+CMMANAGER_LIBDIR=$(TLR_BASE)/cm-manager-mm
 
 CMAPI_INCDIR=$(TLR_BASE)/cm-api
 INSTALL_LIBDIR=$(INSTALL_ROOT)/usr/lib/cmm-manager
@@ -14,7 +14,8 @@ INSTALL_LIBDIR=$(INSTALL_ROOT)/usr/lib/cmm-manager
 	$(CCAN_DIR)/ccan/check_type/check_type.h\
 	$(CCAN_DIR)/ccan/str/str.h
 
-INCLUDE=-I$(CMAPI_INCDIR) \
+INCLUDE=-I$(CMMANAGER_LIBDIR) \
+	-I$(CMAPI_INCDIR) \
 	-I$(CCAN_DIR)/ccan/list \
 	-I$(CCAN_DIR)/ccan/container_of \
 	-I$(CCAN_DIR) \
@@ -29,7 +30,9 @@ COMMON_LIBS=$(COMMON_LIBDIR)/cm_atomic.o \
 	    $(COMMON_LIBDIR)/cm_module.o \
 	    $(COMMON_LIBDIR)/cm_module_loader.o
 
-CMMANAGER_LIBS=	$(CMMANAGER_LIBDIR)/cm_manager_obj_list_modems.o \
+CMMANAGER_LIBS=	$(CMMANAGER_LIBDIR)/cm_modem.o \
+		$(CMMANAGER_LIBDIR)/cm_modem_obj.o \
+		$(CMMANAGER_LIBDIR)/cm_manager_obj_list_modems.o \
 		$(CMMANAGER_LIBDIR)/cm_manager_obj_notify.o \
 		$(CMMANAGER_LIBDIR)/cm_manager_obj.o \
 		$(CMMANAGER_LIBDIR)/cm_manager.o
