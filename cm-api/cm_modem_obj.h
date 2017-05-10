@@ -19,6 +19,8 @@ struct cm_modem {
 
 	struct cm_modem_priv *priv;
 
+	const char *(*get_class_name)(void);
+
 	struct cm_modem *(*get)(struct cm_modem *self);
 
 	void (*put)(struct cm_modem *self);
@@ -120,9 +122,14 @@ struct cm_modem {
 					   cm_err_t *err);
 };
 
-struct cm_modem * cm_modem_new(cm_err_t *err);
+static inline struct cm_modem * to_cm_modem(struct cm_object *cmobj)
+{
+	return cmobj ? cm_container_of(cmobj, struct cm_modem, cmobj) : NULL;
+}
 
-struct cm_modem * cm_modem_new_async(cm_modem_new_done done,
+struct cm_modem * cm_modem_obj_new(cm_err_t *err);
+
+void cm_modem_obj_new_async(cm_modem_new_done done,
 			  void *userdata);
 
 #endif /* _CM_MODEM_OBJ_H_ */

@@ -9,7 +9,7 @@
 #include "cm_module.h"
 #include "cm_manager_priv.h"
 #include "cm_manager_obj.h"
-#include "cm_modem.h"
+#include "cm_modem_obj.h"
 
 #define	CMMANGER_CLASS_NAME		"CMManager"
 /* @tbd: Should CMManeger be singleton */

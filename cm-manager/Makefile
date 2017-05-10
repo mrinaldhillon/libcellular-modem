@@ -2,7 +2,7 @@ include $(TLR_BASE)/build/rds00008.mk
 
 CCAN_DIR=$(TLR_BASE)/lib/ccan
 COMMON_LIBDIR=$(TLR_BASE)/common
-CMMANAGER_LIBDIR=.
+CMMANAGER_LIBDIR=$(TLR_BASE)/cm-manager
 
 CMAPI_INCDIR=$(TLR_BASE)/cm-api
 INSTALL_LIBDIR=$(INSTALL_ROOT)/usr/lib/cmm-manager
@@ -14,7 +14,8 @@ INSTALL_LIBDIR=$(INSTALL_ROOT)/usr/lib/cmm-manager
 	$(CCAN_DIR)/ccan/check_type/check_type.h\
 	$(CCAN_DIR)/ccan/str/str.h
 
-INCLUDE=-I$(CMAPI_INCDIR) \
+INCLUDE=-I$(CMMANAGER_LIBDIR) \
+	-I$(CMAPI_INCDIR) \
 	-I$(CCAN_DIR)/ccan/list \
 	-I$(CCAN_DIR)/ccan/container_of \
 	-I$(CCAN_DIR)

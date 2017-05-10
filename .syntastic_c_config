@@ -1,6 +1,8 @@
 -I cm-manager-mm
 -I cm-api
 -I lib/ccan
+-I /usr/include/glib-2.0 
+-I /usr/lib64/glib-2.0/include
 -I /usr/include 
 -I /usr/include/ModemManager
 -I /usr/include/libmm-glib
