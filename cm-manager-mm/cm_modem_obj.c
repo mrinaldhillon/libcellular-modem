@@ -23,6 +23,43 @@ char * cm_modem_obj_get_path(struct cm_modem *self)
 	return cm_object_get_path(&self->cmobj);
 }
 
+const char * cm_modem_obj_get_manufacturer(struct cm_modem *self)
+{
+	assert(self && self->priv && self->priv->mm_modem);
+	return mm_modem_get_manufacturer(self->priv->mm_modem);
+}
+
+const char * cm_modem_obj_get_model(struct cm_modem *self)
+{
+	assert(self && self->priv && self->priv->mm_modem);
+	return mm_modem_get_model(self->priv->mm_modem);
+}
+
+const char * cm_modem_obj_get_equipment_id(struct cm_modem *self)
+{
+	assert(self && self->priv && self->priv->mm_modem);
+	return mm_modem_get_equipment_identifier(self->priv->mm_modem);
+}
+
+cm_modem_state_t cm_modem_obj_get_state(struct cm_modem *self, cm_err_t *err)
+{
+	assert(self && self->priv && self->priv->mm_modem);
+	return mm_modem_get_state(self->priv->mm_modem);
+}
+
+unsigned int cm_modem_obj_get_signal_quality(struct cm_modem *self)
+{
+	assert(self && self->priv && self->priv->mm_modem);
+	int recent = 0;
+	int signal_quality =
+		mm_modem_get_signal_quality(self->priv->mm_modem, &recent);
+	if (!recent)
+		cm_warn("Signal quality %d in not recent for %s",
+			signal_quality,
+			cm_object_get_name(&self->cmobj));
+	return signal_quality;
+}
+
 static void cm_modem_obj_for_each_modem_get(struct cm_object *bearerobj,
 					      void *userdata)
 {
@@ -201,6 +238,11 @@ struct cm_modem * cm_modem_obj_new(cm_err_t *err)
 	self->put = &cm_modem_obj_put;
 	self->get_class_name = &cm_modem_obj_get_class_name;
 	self->get_path = &cm_modem_obj_get_path;
+	self->get_manufacturer = &cm_modem_obj_get_manufacturer;
+	self->get_model = &cm_modem_obj_get_model;
+	self->get_equipment_id = &cm_modem_obj_get_equipment_id;
+	self->get_signal_quality = &cm_modem_obj_get_signal_quality;
+	self->get_state = &cm_modem_obj_get_state;
 	return self;
 }
 

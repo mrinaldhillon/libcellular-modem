@@ -40,10 +40,10 @@ const char * cm_modem_get_model(struct cm_modem *self)
 	return self->get_model(self);
 }
 
-const char * cm_modem_get_serial(struct cm_modem *self)
+const char * cm_modem_get_equipment_id(struct cm_modem *self)
 {
-	assert(self && self->get_serial);
-	return self->get_serial(self);
+	assert(self && self->get_equipment_id);
+	return self->get_equipment_id(self);
 }
 
 void cm_modem_enable(struct cm_modem *self, cm_err_t *err)
@@ -80,13 +80,19 @@ cm_modem_state_t cm_modem_get_state(struct cm_modem *self,
 	assert(self && self->get_state);
 	return self->get_state(self, err);
 }
-
+// @todo state is local property
 void cm_modem_get_state_async(struct cm_modem *self,
 			      cm_modem_get_state_done done,
 			      void *userdata)
 {
 	assert(self && self->get_state_async);
 	self->get_state_async(self, done, userdata);
+}
+
+unsigned int cm_modem_get_signal_quality(struct cm_modem *self)
+{
+	assert(self && self->get_signal_quality);
+	return self->get_signal_quality(self);
 }
 
 struct cm_bearer * cm_modem_connect(struct cm_modem *self,

@@ -37,7 +37,9 @@ struct cm_modem {
 
 	const char *(*get_model)(struct cm_modem *self);
 
-	const char *(*get_serial)(struct cm_modem *self);
+	const char *(*get_equipment_id)(struct cm_modem *self);
+
+	unsigned int (*get_signal_quality)(struct cm_modem *self);
 
 	void(*enable)(struct cm_modem *self,
 		      cm_err_t *err);

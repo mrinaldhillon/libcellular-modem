@@ -28,7 +28,9 @@ const char * cm_modem_get_manufacturer(struct cm_modem *self);
 
 const char * cm_modem_get_model(struct cm_modem *self);
 
-const char * cm_modem_get_serial(struct cm_modem *self);
+const char * cm_modem_get_equipment_id(struct cm_modem *self);
+
+unsigned int cm_modem_get_signal_quality(struct cm_modem *self);
 
 void cm_modem_enable(struct cm_modem *self,
 		     cm_err_t *err);
