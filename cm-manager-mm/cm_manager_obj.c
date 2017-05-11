@@ -11,9 +11,12 @@
 #include "cm_manager_priv.h"
 #include "cm_manager_obj.h"
 #include "cm_modem_obj.h"
-#include "cm_manager_mm_internal.h"
+//@todo: this is dirty but required since ModemManger object need to be passed
+//around.
+#include "cm_modem_priv.h"
 
 #define	CMMANGER_CLASS_NAME		"CMManager"
+
 /* @tbd: Should CMManeger be singleton */
 //@todo: revisit unloading logic and semaphore logic
 static sem_t mutex;
@@ -58,12 +61,6 @@ static struct cm_manager * cm_manager_obj_get(struct cm_manager *self)
 	cm_set_for_each_safe(self->priv->modems,
 			     &cm_manager_obj_for_each_modem_get,
 			     self);
-	// @todo is it really needed to be part of ref and unref
-	// since following objects are not part of the hierarchy
-	if (self->priv->modem_manager)
-		g_object_ref(self->priv->modem_manager);
-	if (self->priv->dbus_conn)
-		g_object_ref(self->priv->dbus_conn);
 	return self;
 }
 
@@ -84,10 +81,6 @@ void cm_manager_obj_put(struct cm_manager *self)
 			     self);
 
 	cm_set_put(self->priv->modems);
-	if (self->priv->modem_manager)
-		g_object_unref(self->priv->modem_manager);
-	if (self->priv->dbus_conn)
-		g_object_unref(self->priv->dbus_conn);
 	cm_object_put(&self->cmobj);
 }
 
@@ -184,6 +177,11 @@ static void cm_manager_obj_release(struct cm_object *cmobj)
 	struct cm_module *owner = self->priv->owner;
 	cm_debug("Destroying %s", cm_object_get_name(cmobj));
 
+	if (self->priv->modem_manager)
+		g_object_unref(self->priv->modem_manager);
+	if (self->priv->dbus_conn)
+		g_object_unref(self->priv->dbus_conn);
+
 	free(self->priv);
 	free(self);
 	if (owner) {
@@ -226,7 +224,7 @@ static void cm_manager_obj_modem_manager_new(struct cm_manager *self,
 		mm_manager_new_sync(self->priv->dbus_conn,
 				    G_DBUS_OBJECT_MANAGER_CLIENT_FLAGS_DO_NOT_AUTO_START,
 				    NULL, &gerr);
-	if (!self->priv->modem_manager) {
+	if (gerr) {
 		cm_error("Error in creating ModemManager client %s",
 			 gerr->message);
 		*err |= CM_ERR_MANAGER_MM_CREATE_MODEM_MANAGER;

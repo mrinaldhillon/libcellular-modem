@@ -9,12 +9,18 @@
 #include "cm_bearer_properties_obj.h"
 #include "cm_bearer_clbk_defs.h"
 
+#define CM_BEARER_CLASS_NAME		"CMBearer"
+
 struct cm_bearer_priv;
 
 struct cm_bearer {
 	struct cm_object cmobj;
 
 	struct cm_bearer_priv *priv;
+
+	const char * (*get_class_name)(void);
+
+	char * (*get_path)(struct cm_bearer *self);
 
 	struct cm_bearer * (*get)(struct cm_bearer *self);
 
@@ -39,10 +45,10 @@ struct cm_bearer {
 	struct cm_bearer_properties *
 		(*get_properties)(struct cm_bearer *self);
 
-	struct cm_bearer_stats * (*get_stats)(struct cm_bearer_stats *self,
+	struct cm_bearer_stats * (*get_stats)(struct cm_bearer *self,
 					      cm_err_t *err);
 	struct cm_bearer_stats *
-		(*get_stats_async)(struct cm_bearer_stats *self,
+		(*get_stats_async)(struct cm_bearer *self,
 				   cm_bearer_get_stats_done done,
 				   void *userdata);
 
@@ -91,11 +97,17 @@ struct cm_bearer {
 					   void *userdata,
 					   cm_err_t *err);
 
-	void (*unsubscribe_inteface_update)(struct cm_bearer *self,
+	void (*unsubscribe_interface_update)(struct cm_bearer *self,
 					     cm_err_t *err);
 };
 
-struct cm_bearer * cm_bearer_new(cm_err_t *err);
+static inline struct cm_bearer * to_cm_bearer(struct cm_object *cmobj)
+{
+	return cmobj ? cm_container_of(cmobj, struct cm_bearer, cmobj) : NULL;
+}
+
+struct cm_bearer * cm_bearer_new(struct cm_bearer_properties * properties,
+				 cm_err_t *err);
 
 struct cm_bearer * cm_bearer_new_async(cm_bearer_new_done done,
 				       void *userdata);

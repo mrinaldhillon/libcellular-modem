@@ -35,7 +35,14 @@ CMMANAGER_LIBS=	$(CMMANAGER_LIBDIR)/cm_modem.o \
 		$(CMMANAGER_LIBDIR)/cm_manager_obj_list_modems.o \
 		$(CMMANAGER_LIBDIR)/cm_manager_obj_notify.o \
 		$(CMMANAGER_LIBDIR)/cm_manager_obj.o \
-		$(CMMANAGER_LIBDIR)/cm_manager.o
+		$(CMMANAGER_LIBDIR)/cm_manager.o \
+		$(CMMANAGER_LIBDIR)/cm_bearer.o \
+		$(CMMANAGER_LIBDIR)/cm_bearer_obj.o \
+		$(CMMANAGER_LIBDIR)/cm_modem_obj_bearer.o \
+		$(CMMANAGER_LIBDIR)/cm_bearer_properties.o \
+		$(CMMANAGER_LIBDIR)/cm_bearer_properties_obj.o
+
+
 
 
 LIB_CMMANAGER=libcm-manager-mm.so

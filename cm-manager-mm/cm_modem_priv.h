@@ -112,4 +112,9 @@ void cm_modem_obj_subscribe_signal_update(struct cm_modem *self,
 void cm_modem_obj_unsubscribe_signal_updated(struct cm_modem *self,
 					 cm_err_t *err);
 
+void cm_modem_obj_set_mm_modem_object(struct cm_modem *modem,
+				      MMObject *mm_modemobj,
+				      cm_err_t *err);
+
+
 #endif /* _CM_MODEM_PRIV_H_ */

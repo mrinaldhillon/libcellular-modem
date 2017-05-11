@@ -45,10 +45,10 @@ struct cm_bearer_properties * cm_bearer_get_properties(struct cm_bearer *self);
  * update its properties based on notifications. So property returned will be
  * most updated and will not require async call as well as error handling.
  */
-struct cm_bearer_stats * cm_bearer_get_stats(struct cm_bearer_stats *self,
+struct cm_bearer_stats * cm_bearer_get_stats(struct cm_bearer *self,
 						 cm_err_t *err);
 struct cm_bearer_stats *
-cm_bearer_get_stats_async(struct cm_bearer_stats *self,
+cm_bearer_get_stats_async(struct cm_bearer *self,
 			  cm_bearer_get_stats_done done,
 			  void *userdata);
 
@@ -96,7 +96,7 @@ void cm_bearer_subscribe_interface_update(struct cm_bearer *self,
 					  void *userdata,
 					  cm_err_t *err);
 
-void cm_bearer_unsubscribe_ip_config_update(struct cm_bearer *self,
+void cm_bearer_unsubscribe_interface_update(struct cm_bearer *self,
 					  cm_err_t *err);
 
 #endif /* _CM_BEARER_H_ */

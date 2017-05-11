@@ -8,7 +8,8 @@
 #include "cm_atomic.h"
 #include "cm_modem_priv.h"
 #include "cm_modem_obj.h"
-#include "cm_manager_mm_internal.h"
+#include "cm_bearer_obj.h"
+#include "cm_bearer_priv.h"
 
 #define	CMMODEM_CLASS_NAME		"CMModem"
 
@@ -41,6 +42,33 @@ const char * cm_modem_obj_get_equipment_id(struct cm_modem *self)
 	return mm_modem_get_equipment_identifier(self->priv->mm_modem);
 }
 
+void cm_modem_obj_enable(struct cm_modem *self, cm_err_t *err)
+{
+	assert(self && self->priv && self->priv->mm_modem);
+	GError *gerr = NULL;
+	mm_modem_enable_sync(self->priv->mm_modem, NULL, &gerr);
+	if (gerr) {
+		cm_error("Error in enabling the modem %s", gerr->message);
+		*err = CM_ERR_MODEM_MM_ENABLE;
+		g_error_free(gerr);
+		return;
+	}
+	cm_info("CMModem enabled");
+}
+
+void cm_modem_obj_disable(struct cm_modem *self, cm_err_t *err)
+{
+	assert(self && self->priv && self->priv->mm_modem);
+	GError *gerr = NULL;
+	mm_modem_disable_sync(self->priv->mm_modem, NULL, &gerr);
+	if (gerr) {
+		cm_error("Error in enabling the modem %s", gerr->message);
+		*err = CM_ERR_MODEM_MM_DISABLE;
+		g_error_free(gerr);
+		return;
+	}
+	cm_info("CMModem disabled");
+}
 cm_modem_state_t cm_modem_obj_get_state(struct cm_modem *self, cm_err_t *err)
 {
 	assert(self && self->priv && self->priv->mm_modem);
@@ -64,8 +92,8 @@ static void cm_modem_obj_for_each_modem_get(struct cm_object *bearerobj,
 					      void *userdata)
 {
 	assert(bearerobj);
-	/* @todo: change this cm_modem_get once implemented in modem */
-	cm_object_get(bearerobj);
+	struct cm_bearer * bearer = to_cm_bearer(bearerobj);
+	bearer->get(bearer);
 }
 
 static struct cm_modem * cm_modem_obj_get(struct cm_modem *self)
@@ -76,14 +104,6 @@ static struct cm_modem * cm_modem_obj_get(struct cm_modem *self)
 	cm_set_for_each_safe(self->priv->bearers,
 			     &cm_modem_obj_for_each_modem_get,
 			     self);
-
-	if (self->priv->mmobj)
-		g_object_ref(self->priv->mmobj);
-	if (self->priv->mm_modem)
-		g_object_ref(self->priv->mm_modem);
-	if(self->priv->mm_modem_signal)
-		g_object_ref(self->priv->mm_modem_signal);
-
 	return self;
 }
 
@@ -91,8 +111,8 @@ static void cm_modem_obj_for_each_modem_put(struct cm_object *bearerobj,
 					      void *userdata)
 {
 	assert(bearerobj);
-	/* @todo: change this cm_modem_get once implemented in modem */
-	cm_object_get(bearerobj);
+	struct cm_bearer * bearer = to_cm_bearer(bearerobj);
+	bearer->get(bearer);
 }
 
 static void cm_modem_obj_put(struct cm_modem *self)
@@ -102,14 +122,6 @@ static void cm_modem_obj_put(struct cm_modem *self)
 			     &cm_modem_obj_for_each_modem_get,
 			     self);
 	cm_set_put(self->priv->bearers);
-
-	if (self->priv->mmobj)
-		g_object_unref(self->priv->mmobj);
-	if (self->priv->mm_modem)
-		g_object_unref(self->priv->mm_modem);
-	if(self->priv->mm_modem_signal)
-		g_object_unref(self->priv->mm_modem_signal);
-
 	cm_object_put(&self->cmobj);
 }
 
@@ -207,6 +219,14 @@ static void cm_modem_obj_release(struct cm_object *cmobj)
 	struct cm_modem *self = to_cm_modem(cmobj);
 
 	cm_debug("Destroying %s", cm_object_get_name(cmobj));
+
+	if (self->priv->mmobj)
+		g_object_unref(self->priv->mmobj);
+	if (self->priv->mm_modem)
+		g_object_unref(self->priv->mm_modem);
+	if(self->priv->mm_modem_signal)
+		g_object_unref(self->priv->mm_modem_signal);
+
 	free(self->priv);
 	free(self);
 }
@@ -243,6 +263,9 @@ struct cm_modem * cm_modem_obj_new(cm_err_t *err)
 	self->get_equipment_id = &cm_modem_obj_get_equipment_id;
 	self->get_signal_quality = &cm_modem_obj_get_signal_quality;
 	self->get_state = &cm_modem_obj_get_state;
+	self->create_bearer = &cm_modem_obj_create_bearer;
+	self->enable = &cm_modem_obj_enable;
+	self->disable = &cm_modem_obj_disable;
 	return self;
 }
 

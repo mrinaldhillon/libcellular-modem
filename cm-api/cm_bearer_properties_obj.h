@@ -1,7 +1,11 @@
 #ifndef _CM_BEARER_PROPERTIES_OBJ_H_
 #define _CM_BEARER_PROPERTIES_OBJ_H_
 
+#include "cm_object.h"
+#include "cm_err.h"
 #include "cm_ip_type.h"
+
+#define CM_BEARER_PROPERTIES_CLASS_NAME		"CMBearerProperties"
 
 struct cm_bearer_properties_priv;
 
@@ -35,6 +39,14 @@ struct cm_bearer_properties {
 	const char *
 		(*get_number)(struct cm_bearer_properties *self);
 };
+
+static inline struct cm_bearer_properties *
+to_cm_bearer_properties(struct cm_object *cmobj)
+{
+	return cmobj ? cm_container_of(cmobj,
+				       struct cm_bearer_properties,
+				       cmobj) : NULL;
+}
 
 struct cm_bearer_properties *
 cm_bearer_properties_obj_new(const char *apn,
