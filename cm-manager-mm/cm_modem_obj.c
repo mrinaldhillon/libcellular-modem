@@ -264,8 +264,10 @@ struct cm_modem * cm_modem_obj_new(cm_err_t *err)
 	self->get_signal_quality = &cm_modem_obj_get_signal_quality;
 	self->get_state = &cm_modem_obj_get_state;
 	self->create_bearer = &cm_modem_obj_create_bearer;
+	self->delete_bearer = &cm_modem_obj_delete_bearer;
 	self->enable = &cm_modem_obj_enable;
 	self->disable = &cm_modem_obj_disable;
+
 	return self;
 }
 

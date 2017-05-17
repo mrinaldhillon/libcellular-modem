@@ -81,6 +81,10 @@ cm_modem_obj_create_bearer(struct cm_modem *self,
 		       struct cm_bearer_properties *properties,
 		       cm_err_t *err);
 
+void cm_modem_obj_delete_bearer(struct cm_modem *self,
+				const char *bearer_path,
+				cm_err_t *err);
+
 void cm_modem_obj_create_bearer_async(struct cm_modem *self,
 				  struct cm_bearer_properties *properties,
 				  cm_modem_create_bearer_done done,

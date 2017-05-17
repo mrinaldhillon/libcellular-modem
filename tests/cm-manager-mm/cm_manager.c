@@ -21,6 +21,30 @@ static void cm_manager_test_print_modem_info(struct cm_modem *modem)
 	printf("Signal Quality:\t%u\n", cm_modem_get_signal_quality(modem));
 }
 
+static void print_bearer_info(struct cm_bearer *bearer)
+{
+	cm_err_t err = CM_ERR_NONE;
+	struct cm_bearer_ip_config *ip_conf=
+		cm_bearer_get_ip_config(bearer, &err);
+	if (CM_ERR_NONE != err) {
+		printf("Error in getting ip config %d\n", err);
+		return;
+	}
+
+	printf("Data Packet Bearer Info-----------\n");
+	printf("IP Config: ----------------\n");
+	printf("Method:\t%s\n",
+	       cm_ip_method_to_string(cm_bearer_ip_config_get_method(ip_conf)));
+	printf("Address:\t%s\n", cm_bearer_ip_config_get_address(ip_conf));
+	printf("Prefix:\t%u\n", cm_bearer_ip_config_get_prefix(ip_conf));
+	printf("Gateway:\t%s\n", cm_bearer_ip_config_get_gateway(ip_conf));
+	printf("DNS:\t%s\n", cm_bearer_ip_config_get_dns(ip_conf));
+	printf("MTU:\t%u\n", cm_bearer_ip_config_get_mtu(ip_conf));
+	printf("Interface\t%s\n", cm_bearer_get_interface(bearer, &err));
+
+	cm_bearer_ip_config_unref(ip_conf);
+}
+
 static void cm_manager_list_modems_for_each_ready(struct cm_manager *manager,
 						  struct cm_modem *modem,
 						  void *userdata)
@@ -29,6 +53,7 @@ static void cm_manager_list_modems_for_each_ready(struct cm_manager *manager,
 	cm_err_t err = CM_ERR_NONE;
 	struct cm_bearer_properties * properties = NULL;
 	struct cm_bearer *bearer = NULL;
+	char *bearer_path = NULL;
 
 	char *path = cm_modem_get_path(modem);
 	printf("Modem Path: %s\n", path);
@@ -44,12 +69,19 @@ static void cm_manager_list_modems_for_each_ready(struct cm_manager *manager,
 		printf("Error in creating data packet bearer %d", err);
 		goto out_unref_bearer_properties;
 	}
+
+	bearer_path = cm_bearer_get_path(bearer);
+	printf("Bearer Path: %s\n", bearer_path);
+
 	printf("Connecting Modem %s -------------\n", path);
 	cm_bearer_connect(bearer, &err);
 	if (CM_ERR_NONE != err) {
 		printf("Error in connecting modem %d\n", err);
 		goto out_unref_bearer;
 	}
+	printf("Connected\n");
+
+//	print_bearer_info(bearer);
 
 	printf("Press a key to continue\n");
 	getchar();
@@ -60,8 +92,19 @@ static void cm_manager_list_modems_for_each_ready(struct cm_manager *manager,
 		printf("Error in connecting modem %d\n", err);
 		goto out_unref_bearer;
 	}
+	printf("Dis-connected-------------\n");
+
+	printf("Deleting Bearer %s--------------\n", bearer_path);
+	cm_modem_delete_bearer(modem, bearer_path, &err);
+	if (CM_ERR_NONE != err) {
+		printf("Error in deleting bearer %d\n", err);
+	}
+	printf("Press a key to continue\n");
+	getchar();
+
 out_unref_bearer:
 	cm_bearer_unref(bearer);
+	free(bearer_path);
 out_unref_bearer_properties:
 	cm_bearer_properties_unref(properties);
 	free(path);

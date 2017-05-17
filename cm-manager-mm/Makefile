@@ -40,7 +40,9 @@ CMMANAGER_LIBS=	$(CMMANAGER_LIBDIR)/cm_modem.o \
 		$(CMMANAGER_LIBDIR)/cm_bearer_obj.o \
 		$(CMMANAGER_LIBDIR)/cm_modem_obj_bearer.o \
 		$(CMMANAGER_LIBDIR)/cm_bearer_properties.o \
-		$(CMMANAGER_LIBDIR)/cm_bearer_properties_obj.o
+		$(CMMANAGER_LIBDIR)/cm_bearer_properties_obj.o \
+		$(CMMANAGER_LIBDIR)/cm_bearer_ip_config.o \
+		$(CMMANAGER_LIBDIR)/cm_bearer_ip_config_obj.o
 
 
 
@@ -71,4 +73,4 @@ install: $(LIB_CMMANAGER)
 	install -m 0755 $^ $(INSTALL_LIBDIR)
 
 clean:
-	rm -f $(LIB_CMMANAGER) $(CMMANAGER_LIBS) $(LIB_CMMANAGER)/*.d
+	rm -f $(LIB_CMMANAGER) $(CMMANAGER_LIBS) $(CMMANAGER_LIBDIR)/*.d

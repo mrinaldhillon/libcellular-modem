@@ -36,6 +36,36 @@ void cm_bearer_obj_disconnect(struct cm_bearer *self, cm_err_t *err)
 	cm_info("Dis-connected data bearer %s", self->get_path(self));
 }
 
+struct cm_bearer_ip_config * cm_bearer_obj_get_ip_config(struct cm_bearer *self,
+						     cm_err_t *err)
+{
+	assert(self && err);
+	GError *gerr = NULL;
+	// @todo support more types
+	MMBearerIpConfig * mm_ip_config =
+		mm_bearer_get_ipv4_config(self->priv->mm_bearer);
+	if (gerr) {
+		cm_error("Error in fetching MMBearerIpConfig %s",
+			 gerr->message);
+		*err = CM_ERR_BEARER_MM_GET_IP_CONFIG;
+		g_error_free(gerr);
+		return NULL;
+	}
+
+	struct cm_bearer_ip_config * ip_config =
+		cm_bearer_ip_config_obj_new(mm_ip_config);
+	g_object_unref(mm_ip_config);
+	return ip_config;
+}
+
+const char * cm_bearer_obj_get_interface(struct cm_bearer *self, cm_err_t *err)
+{
+	assert(self && err);
+	// @todo support more types
+	return (const char *)
+		mm_bearer_get_interface(self->priv->mm_bearer);
+}
+
 struct cm_bearer_properties *
 cm_bearer_obj_get_properties(struct cm_bearer *self)
 {
@@ -101,6 +131,7 @@ struct cm_bearer * cm_bearer_new(struct cm_bearer_properties *properties,
 	self->cmobj.release = &cm_bearer_obj_release;
 	cm_object_set_name(&self->cmobj, CM_BEARER_CLASS_NAME);
 
+	cm_atomic_set(&priv->state_deleted, 0);
 	self->priv = priv;
 	self->priv->properties = properties->get(properties);
 	self->get = &cm_bearer_obj_get;
@@ -108,6 +139,8 @@ struct cm_bearer * cm_bearer_new(struct cm_bearer_properties *properties,
 	self->get_path = &cm_bearer_obj_get_path;
 	self->connect = &cm_bearer_obj_connect;
 	self->disconnect = &cm_bearer_obj_disconnect;
+	self->get_ip_config = &cm_bearer_obj_get_ip_config;
+	self->get_interface = &cm_bearer_obj_get_interface;
 
 	return self;
 }

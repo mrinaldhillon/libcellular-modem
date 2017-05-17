@@ -52,3 +52,35 @@ out_put_mmbearer:
 	g_object_unref(mm_bearer);
 	return NULL;
 }
+
+void
+cm_modem_obj_delete_bearer(struct cm_modem *self,
+			   const char *bearer_path,
+			   cm_err_t *err)
+{
+	assert(self && self->priv && self->priv->mm_modem && bearer_path);
+	struct cm_bearer *bearer = NULL;
+	struct cm_object *bearer_obj = cm_set_find_object(self->priv->bearers,
+							  basename(bearer_path));
+	if (!bearer_obj) {
+		cm_warn("Could not bearer %s", bearer_path);
+		*err = CM_ERR_MODEM_MM_BEARER_NOT_FOUND;
+		return;
+	}
+	bearer = to_cm_bearer(bearer_obj);
+
+	GError *gerr = NULL;
+	mm_modem_delete_bearer_sync(self->priv->mm_modem,
+			mm_bearer_get_path(bearer->priv->mm_bearer),
+					    NULL, &gerr);
+	if (gerr) {
+		cm_error("Error in deleting bearer %s", gerr->message);
+		*err |= CM_ERR_MODEM_MM_DELETE_BEARER;
+		g_error_free(gerr);
+		goto out_put_bearerobj;
+	}
+	cm_atomic_set(&bearer->priv->state_deleted, 1);
+
+out_put_bearerobj:
+	cm_object_put(bearer_obj);
+}

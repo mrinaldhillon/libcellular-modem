@@ -13,6 +13,7 @@ struct cm_bearer;
 struct cm_bearer_priv {
 	MMBearer *mm_bearer;
 	struct cm_bearer_properties *properties;
+	cm_atomic_t state_deleted;
 };
 
 char * cm_bearer_obj_get_modem_path(struct cm_bearer *self);
