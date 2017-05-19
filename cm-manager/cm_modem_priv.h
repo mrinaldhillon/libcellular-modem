@@ -15,7 +15,7 @@
 
 struct cm_modem_priv {
 	struct cm_set *bearers;
-	atomic_t num_bearers;
+	cm_atomic_t num_bearers;
 };
 
 const char * cm_modem_obj_get_manufacturer(struct cm_modem *self);

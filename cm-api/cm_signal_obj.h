@@ -1,7 +1,9 @@
 #ifndef _CM_SIGNAL_OBJ_H_
 #define _CM_SIGNAL_OBJ_H_
 
+#include "cm_err.h"
 #include "cm_object.h"
+#include "cm_signal_type.h"
 
 struct cm_signal_priv;
 
@@ -10,7 +12,9 @@ struct cm_signal {
 
 	struct cm_signal_priv *priv;
 
-	const char * (get_class_name)(void);
+	const char * (*get_class_name)(void);
+
+	char *(*get_path)(struct cm_signal *self);
 
 	struct cm_signal * (*get)(struct cm_signal *self);
 

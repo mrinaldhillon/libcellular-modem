@@ -43,6 +43,10 @@ typedef void (*cm_modem_create_bearer_done)(struct cm_modem *self,
 					    void *userdata,
 					    cm_err_t err);
 
+typedef void (*cm_modem_delete_bearer_done)(struct cm_modem *self,
+					    void *userdata,
+					    cm_err_t err);
+
 typedef void (*cm_modem_list_bearers_for_each)(struct cm_modem *self,
 					       struct cm_bearer *bearer,
 					       void *userdata);

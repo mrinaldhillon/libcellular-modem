@@ -8,7 +8,7 @@
 #include "cm_manager_priv.h"
 #include "cm_manager_obj.h"
 #include "cm_manager_clbk_defs.h"
-#include "cm_modem.h"
+#include "cm_modem_obj.h"
 
  //@todo need new and free methods for ctx
 struct cm_manager_list_modems_ctx {
@@ -21,16 +21,15 @@ static void cm_manager_obj_list_modems_for_each(struct cm_object *modemobj,
 						void *userdata)
 {
 	assert(modemobj);
-#if 0
-	struct cm_manager *self = NULL;
+	cm_debug("In list modem");
+
 	struct cm_manager_list_modems_ctx *ctx = NULL;
 	struct cm_modem *modem = cm_container_of(modemobj,
 						 struct cm_modem, cmobj);
 
 	ctx = (struct cm_manager_list_modems_ctx *)userdata;
 	assert(ctx && ctx->self && ctx->for_each);
-	ctx->for_each(self, modem, ctx->userdata);
-#endif
+	ctx->for_each(ctx->self, modem, ctx->userdata);
 }
 
 void cm_manager_obj_list_modems(struct cm_manager *self,
@@ -81,8 +80,8 @@ static void * cm_manager_obj_list_modems_thread(void *userdata)
 
 	free(ctx);
 	// balance ref taken before creating thread
-//	cm_object_put(&self->cmobj);
 	self->put(self);
+	//cm_object_put(&self->cmobj);
 	return NULL;
 }
 
@@ -93,7 +92,7 @@ void cm_manager_obj_list_modems_async(struct cm_manager *self,
 {
 	cm_err_t err = CM_ERR_NONE;
 
-	assert(self && self->priv && for_each && done);
+	assert(self && self->priv && self->priv->modems && for_each && done);
 	struct cm_manager_list_modems_async_ctx *ctx =
 		(struct cm_manager_list_modems_async_ctx *)
 		calloc(1, sizeof(*ctx));
@@ -108,8 +107,8 @@ void cm_manager_obj_list_modems_async(struct cm_manager *self,
 	ctx->done = done;
 	ctx->userdata = userdata;
 	// increment ref before async call
-	self->get(self);
 //	cm_object_get(&self->cmobj);
+	self->get(self);
 
 	cm_thread_t thread_id;
 	cm_thread_create(&thread_id, &cm_manager_obj_list_modems_thread,
@@ -122,7 +121,8 @@ void cm_manager_obj_list_modems_async(struct cm_manager *self,
 out_freectx:
 	free(ctx);
 	// balance ref
-	cm_object_put(&self->cmobj);
+//	cm_object_put(&self->cmobj);
+	self->put(self);
 	//@todo: this kind of mechanism may confuse developer of client lib
 	// consider return error from this function if failure before
 	// creating a new thread
