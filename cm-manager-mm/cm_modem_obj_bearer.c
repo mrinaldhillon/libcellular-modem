@@ -33,24 +33,15 @@ cm_modem_obj_create_bearer(struct cm_modem *self,
 	}
 
 	bearer = cm_bearer_new(properties, err);
-	if (CM_ERR_NONE != *err) {
-		cm_error("Error in creating new CMBearer object %d", *err);
-		goto out_put_mmbearer;
-	}
-
 	cm_bearer_obj_set_mm_bearer(bearer, mm_bearer);
-	g_object_unref(mm_bearer);
 
 	bearer->get(bearer);
 	cm_object_add(&bearer->cmobj, &self->cmobj, self->priv->bearers,
 		      err, "%s-%d", CM_BEARER_CLASS_NAME,
 		      cm_atomic_inc_and_read(&self->priv->num_bearers));
 
-	return bearer;
-
-out_put_mmbearer:
 	g_object_unref(mm_bearer);
-	return NULL;
+	return bearer;
 }
 
 void
@@ -63,7 +54,7 @@ cm_modem_obj_delete_bearer(struct cm_modem *self,
 	struct cm_object *bearer_obj = cm_set_find_object(self->priv->bearers,
 							  basename(bearer_path));
 	if (!bearer_obj) {
-		cm_warn("Could not bearer %s", bearer_path);
+		cm_warn("Could not find bearer %s", bearer_path);
 		*err = CM_ERR_MODEM_MM_BEARER_NOT_FOUND;
 		return;
 	}

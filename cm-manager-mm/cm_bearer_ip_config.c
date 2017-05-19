@@ -33,7 +33,7 @@ unsigned int cm_bearer_ip_config_get_prefix(struct cm_bearer_ip_config *self)
 	return self->get_prefix(self);
 }
 
-const char * cm_bearer_ip_config_get_dns(struct cm_bearer_ip_config *self)
+const char ** cm_bearer_ip_config_get_dns(struct cm_bearer_ip_config *self)
 {
 	assert(self && self->get_dns);
 	return self->get_dns(self);

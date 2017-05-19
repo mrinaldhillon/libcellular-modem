@@ -8,6 +8,7 @@
 #include "cm_signal.h"
 #include "cm_bearer_obj.h"
 #include "cm_bearer_properties_obj.h"
+#include "cm_modem_connect_properties_obj.h"
 #include "cm_sim.h"
 #include "cm_messaging.h"
 #include "cm_modem_obj.h"
@@ -19,6 +20,7 @@ struct cm_modem_priv {
 	cm_atomic_t num_bearers;
 	MMObject *mmobj;
 	MMModem *mm_modem;
+	MMModemSimple *mm_simple_modem;
 	MMModemSignal *mm_modem_signal;
 };
 
@@ -52,11 +54,11 @@ void cm_modem_obj_get_state_async(struct cm_modem *self,
 			      void *userdata);
 
 struct cm_bearer * cm_modem_obj_connect(struct cm_modem *self,
-				    struct cm_bearer_properties *properties,
+				    struct cm_modem_connect_properties *properties,
 				    cm_err_t *err);
 
 void cm_modem_obj_connect_async(struct cm_modem *self,
-			    struct cm_bearer_properties *properties,
+			    struct cm_modem_connect_properties *properties,
 			    cm_modem_connect_done done,
 			    void *userdata);
 

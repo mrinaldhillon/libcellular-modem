@@ -7,6 +7,7 @@
 #include "cm_signal.h"
 #include "cm_bearer_obj.h"
 #include "cm_bearer_properties_obj.h"
+#include "cm_modem_connect_properties_obj.h"
 // @todo messaging and sim obj
 #include "cm_sim.h"
 #include "cm_messaging.h"
@@ -63,11 +64,12 @@ struct cm_modem {
 				void *userdata);
 
 	struct cm_bearer *(*connect)(struct cm_modem *self,
-				     struct cm_bearer_properties *properties,
+				     struct cm_modem_connect_properties
+				     *properties,
 				     cm_err_t *err);
 
 	void (*connect_async)(struct cm_modem *self,
-			      struct cm_bearer_properties *properties,
+			      struct cm_modem_connect_properties *properties,
 			      cm_modem_connect_done done,
 			      void *userdata);
 

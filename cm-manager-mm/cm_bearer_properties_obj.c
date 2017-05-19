@@ -157,15 +157,10 @@ cm_bearer_properties_obj_set_mm_bearer_properties(const char *apn,
 	return mm_bearer_properties;
 }
 
-
 struct cm_bearer_properties *
-cm_bearer_properties_obj_new(const char *apn,
-			 const char *user,
-			 const char *password,
-			 cm_ip_type_t ip_type,
-			 unsigned int allow_roaming,
-			 const char *number)
+cm_bearer_properties_obj_new_internal(MMBearerProperties *mm_bearer_properties)
 {
+
 	struct cm_bearer_properties_priv *priv =
 		(struct cm_bearer_properties_priv *)calloc(1, sizeof(*priv));
 	if (!priv) {
@@ -179,16 +174,11 @@ cm_bearer_properties_obj_new(const char *apn,
 		cm_error("Unable to allocate enough space %d",errno);
 		abort();
 	}
-	priv->mm_bearer_properties =
-		cm_bearer_properties_obj_set_mm_bearer_properties(apn, user,
-								  password,
-								  ip_type,
-								  allow_roaming,
-								  number);
+
 	cm_object_init(&self->cmobj);
 	self->cmobj.release = &cm_bearer_properties_obj_release;
 	cm_object_set_name(&self->cmobj, CM_BEARER_PROPERTIES_CLASS_NAME);
-
+	priv->mm_bearer_properties = g_object_ref(mm_bearer_properties);
 	self->priv = priv;
 	self->get = &cm_bearer_properties_obj_get;
 	self->put = &cm_bearer_properties_obj_put;
@@ -201,4 +191,24 @@ cm_bearer_properties_obj_new(const char *apn,
 	self->get_ip_type = &cm_bearer_properties_obj_get_ip_type;
 
 	return self;
+}
+
+struct cm_bearer_properties *
+cm_bearer_properties_obj_new(const char *apn,
+			 const char *user,
+			 const char *password,
+			 cm_ip_type_t ip_type,
+			 unsigned int allow_roaming,
+			 const char *number)
+{
+
+	MMBearerProperties *mm_bearer_properties =
+		cm_bearer_properties_obj_set_mm_bearer_properties(apn, user,
+								  password,
+								  ip_type,
+								  allow_roaming,
+								  number);
+
+	return cm_bearer_properties_obj_new_internal(mm_bearer_properties);
+
 }

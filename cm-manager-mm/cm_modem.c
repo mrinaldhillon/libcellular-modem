@@ -4,6 +4,7 @@
 #include "cm_signal_obj.h"
 #include "cm_bearer_obj.h"
 #include "cm_bearer_properties_obj.h"
+#include "cm_modem_connect_properties_obj.h"
 //#include "cm_sim.h"
 //#include "cm_messaging.h"
 #include "cm_modem_clbk_defs.h"
@@ -96,7 +97,7 @@ unsigned int cm_modem_get_signal_quality(struct cm_modem *self)
 }
 
 struct cm_bearer * cm_modem_connect(struct cm_modem *self,
-				    struct cm_bearer_properties *properties,
+				    struct cm_modem_connect_properties *properties,
 				    cm_err_t *err)
 {
 	assert(self && self->connect);
@@ -104,7 +105,7 @@ struct cm_bearer * cm_modem_connect(struct cm_modem *self,
 }
 
 void cm_modem_connect_async(struct cm_modem *self,
-				    struct cm_bearer_properties *properties,
+				    struct cm_modem_connect_properties *properties,
 				    cm_modem_connect_done done,
 				    void *userdata)
 {

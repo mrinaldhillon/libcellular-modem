@@ -24,7 +24,7 @@ struct cm_bearer_ip_config {
 
 	unsigned int (*get_prefix)(struct cm_bearer_ip_config *self);
 
-	const char * (*get_dns)(struct cm_bearer_ip_config *self);
+	const char ** (*get_dns)(struct cm_bearer_ip_config *self);
 
 	const char * (*get_gateway)(struct cm_bearer_ip_config *self);
 

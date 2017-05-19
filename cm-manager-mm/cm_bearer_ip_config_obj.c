@@ -15,10 +15,10 @@ cm_bearer_ip_config_obj_get_address(struct cm_bearer_ip_config *self)
 	return address;
 }
 
-static const char *
+static const char **
 cm_bearer_ip_config_obj_get_dns(struct cm_bearer_ip_config *self)
 {
-	return (const char *)
+	return (const char **)
 		mm_bearer_ip_config_get_dns(self->mm_ip_config);
 }
 

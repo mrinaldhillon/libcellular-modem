@@ -267,6 +267,8 @@ struct cm_modem * cm_modem_obj_new(cm_err_t *err)
 	self->delete_bearer = &cm_modem_obj_delete_bearer;
 	self->enable = &cm_modem_obj_enable;
 	self->disable = &cm_modem_obj_disable;
+	self->connect = &cm_modem_obj_connect;
+	self->disconnect = &cm_modem_obj_disconnect;
 
 	return self;
 }
@@ -333,5 +335,6 @@ void cm_modem_obj_set_mm_modem_object(struct cm_modem *self,
 
 	self->priv->mmobj = g_object_ref(mm_modemobj);
 	self->priv->mm_modem = mm_object_get_modem(mm_modemobj);
+	self->priv->mm_simple_modem = mm_object_get_modem_simple(mm_modemobj);
 	self->priv->mm_modem_signal = mm_object_get_modem_signal(mm_modemobj);
 }

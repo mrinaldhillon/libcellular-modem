@@ -42,7 +42,12 @@ CMMANAGER_LIBS=	$(CMMANAGER_LIBDIR)/cm_modem.o \
 		$(CMMANAGER_LIBDIR)/cm_bearer_properties.o \
 		$(CMMANAGER_LIBDIR)/cm_bearer_properties_obj.o \
 		$(CMMANAGER_LIBDIR)/cm_bearer_ip_config.o \
-		$(CMMANAGER_LIBDIR)/cm_bearer_ip_config_obj.o
+		$(CMMANAGER_LIBDIR)/cm_bearer_ip_config_obj.o \
+		$(CMMANAGER_LIBDIR)/cm_modem_connect_properties.o \
+		$(CMMANAGER_LIBDIR)/cm_modem_connect_properties_obj.o \
+		$(CMMANAGER_LIBDIR)/cm_modem_connect.o
+
+
 
 
 

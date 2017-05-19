@@ -6,6 +6,7 @@
 #include "cm_signal.h"
 #include "cm_bearer.h"
 #include "cm_bearer_properties.h"
+#include "cm_modem_connect_properties.h"
 #include "cm_sim.h"
 #include "cm_messaging.h"
 #include "cm_modem_clbk_defs.h"
@@ -50,11 +51,11 @@ cm_modem_state_t cm_modem_get_state(struct cm_modem *self,
 				    cm_err_t *err);
 
 struct cm_bearer * cm_modem_connect(struct cm_modem *self,
-				    struct cm_bearer_properties *properties,
+				    struct cm_modem_connect_properties *properties,
 				    cm_err_t *err);
 
 void cm_modem_connect_async(struct cm_modem *self,
-			    struct cm_bearer_properties *properties,
+			    struct cm_modem_connect_properties *properties,
 			    cm_modem_connect_done done,
 			    void *userdata);
 
