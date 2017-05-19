@@ -41,3 +41,6 @@
 		After reading once unref them and fetch from live object when needed.
 	Objects take referenece to parent upon creation and unref parent once they are destroyed.
 	This makes sure that parent gets destroyed only once all its children are distroyed.
+
+* Compilable object:
+* cm-manager-mm, tests/cm-manager-mm/cm_manager, tests/modem-manager/mm_test_simple

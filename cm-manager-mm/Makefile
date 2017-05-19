@@ -58,8 +58,8 @@ ifeq ($(DEBUG),true)
 	CFLAGS += -g -DCM_DEBUG
 endif
 
-CFLAGS += -fPIC $(INCLUDE) $(shell pkg-config --cflags glib-2.0)
-LDFLAGS= -lpthread -lmm-glib $(shell pkg-config --libs glib-2.0)
+CFLAGS += -fPIC $(INCLUDE) $(shell pkg-config --cflags mm-glib)
+LDFLAGS= -lpthread $(shell pkg-config --libs mm-glib)
 
 .PHONY: all clean install
 

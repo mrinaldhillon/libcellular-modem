@@ -22,7 +22,7 @@ all: $(TARGETS)
 	$(MAKE) -C $@ all
 ../tests:
 	$(MAKE) -C $@ all
-../cm-manager:
+#../cm-manager:
 	$(MAKE) -C $@ all
 
 #../cmm-manager:
